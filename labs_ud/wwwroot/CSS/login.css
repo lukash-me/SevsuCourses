@@ -1,0 +1,80 @@
+* {
+    font-size: 20px;
+}
+h1 {
+    font-size: 30px;
+    color: rgb(114, 222, 255);
+}
+
+.container {
+    margin-top: 80px;
+    width: 100%;
+    height: 900px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.container form .field .box{
+    height: 3rem;
+    width: 100%;
+    margin: 1rem 0rem;
+    border-radius: .5rem;
+    padding: .8rem;
+    -webkit-appearance: none;
+    color: #000;
+}
+
+.container form .field {
+    width: 600px;
+    margin-bottom: 10px;
+}
+
+.container .button-container {
+    margin-top: 40px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.container form button {
+    width: 250px;
+    height: 80px;
+    background: #f4f4f4;
+    border: 2px solid #1f2d6b;
+    border-radius: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    color: #1f2d6b;
+    cursor: pointer;
+    margin-right: 20px;
+}
+
+.container form .role-container{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.container form .role-container .role{
+    width: 33.3%;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    cursor: pointer;
+    border: 1px solid black;
+}
+
+.container form .role-container .role span{
+    color: #000;
+}
+
+    
