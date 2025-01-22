@@ -1,3 +1,31 @@
+<template>
+    <head>
+    <meta charset="utf-8">
+    <title>Все курсы</title>
+
+  </head>
+
+  <header>
+    <div>
+      <a href="index.html" class="logo">Все курсы</a>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a href="#">Моя группа</a></li>
+        <li><span class="user">Фамилия Имя</span></li>
+      </ul>
+    </nav>
+  </header>
+
+  <router-view></router-view>
+</template>
+
+<script>
+
+</script>
+
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Tomorrow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
@@ -69,7 +97,6 @@
     font-weight: 900;
     color: #000;
     transition: .5s;
-    
   }
   
   header .logo:hover{
@@ -97,3 +124,75 @@
   nav ul li:hover > ul {
     display: initial;
   }
+
+
+
+.cards-row {
+    display: flex;
+}
+
+.course-card {
+    height: 60rem;
+    width: 40rem;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 14px;
+    margin-right: 1rem;
+    cursor: pointer;
+}
+
+.course-card .image {
+    margin-top: 1%;
+    height: 50%;
+    width: 98%;
+    background-color: #9b9b9b;
+    justify-content: center;
+    border-radius: 14px 14px 0px 0px;
+    overflow: hidden;
+}
+
+.course-card .image img{
+    width: 100%;
+    height: 100%;
+    object-fit:cover;
+}
+
+.course-card .card-text{
+    text-align: center;
+    margin: 1%;
+}
+
+.course-card .card-text h1{
+    color: black;
+    font-size: 1.8rem;
+}
+
+.course-card .card-text span{
+    color: black;
+    font-size: 1.8rem;
+}
+
+.course-add-card {
+    height: 60rem;
+    width: 40rem;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 14px;
+    margin-right: 1rem;
+}
+
+.course-add-card .add-button {
+    height: 98%;
+    width: 98%;
+    background-color: #9b9b9b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 14px;
+}
+</style>

@@ -23,6 +23,10 @@ builder.Services.AddCors(options =>
         builder.AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader());
+    options.AddPolicy("AllowVueApp", builder =>
+        builder.WithOrigins("http://localhost:8080")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
 });
 
 builder.Services
@@ -75,6 +79,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     
     app.UseCors("AllowAllOrigins");
+    app.UseCors("AllowVueApp");
+    app.UseRouting();
 }
 
 app.UseStaticFiles();
