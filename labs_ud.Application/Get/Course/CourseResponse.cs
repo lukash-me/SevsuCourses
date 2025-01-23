@@ -1,4 +1,4 @@
-namespace labs_ud.Application.Get;
+namespace labs_ud.Application.Get.Course;
 
 public record CourseResponse(
     Guid id,

@@ -39,6 +39,48 @@ public class StudentController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получение id группы, в которой обучается студент по его id
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="studentId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("group/{studentId:guid}")]
+    public async Task<ActionResult<Guid>> GetGroupId(
+        [FromServices] GetGroupByStudentIdService service,
+        [FromRoute] Guid studentId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(studentId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение id, ФИО, статуса всех студентов группы по id группы
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="groupId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("all-id-fio-status/{groupId:guid}")]
+    public async Task<ActionResult<Guid>> GetGroupId(
+        [FromServices] GetStudentsFioStatusByGroupIdService service,
+        [FromRoute] Guid groupId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(groupId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<Guid>> Delete(
         [FromRoute] Guid id,

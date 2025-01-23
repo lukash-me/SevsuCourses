@@ -36,7 +36,7 @@ public class GroupRepository
         }
         
         return group;
-    } 
+    }
     
     public Guid Delete(Group group, CancellationToken cancellationToken = default)
     {

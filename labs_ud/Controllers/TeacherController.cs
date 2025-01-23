@@ -54,4 +54,25 @@ public class TeacherController : ControllerBase
         
         return Ok(result.Value);
     }
+    
+    /// <summary>
+    /// Получение ФИО учителя по id учителя
+    /// </summary>
+    /// <param name="teacherId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("fio/{teacherId:guid}")]
+    public async Task<ActionResult<Guid>> GetFioByTeacherId(
+        [FromRoute] Guid teacherId,
+        [FromServices] GetTeacherFioByIdService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(teacherId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
 }

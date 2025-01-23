@@ -1,10 +1,8 @@
 using CSharpFunctionalExtensions;
-using labs_ud.Application.Create;
-using labs_ud.Application.Entities;
 using labs_ud.Application.Errors;
 using labs_ud.Application.Repositories;
 
-namespace labs_ud.Application.Get;
+namespace labs_ud.Application.Get.Course;
 
 public class GetAllCoursesService
 {

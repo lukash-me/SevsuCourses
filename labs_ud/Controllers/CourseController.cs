@@ -1,6 +1,7 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get;
+using labs_ud.Application.Get.Course;
 using labs_ud.Application.IDs;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -62,6 +63,27 @@ public class CourseController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(id, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение названия курса и id преподавателя по id курса
+    /// </summary>
+    /// <param name="courseId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("title-teacher/{courseId:guid}")]
+    public async Task<ActionResult<Guid>> GetTitleAndTeacherById(
+        [FromRoute] Guid courseId,
+        [FromServices] GetTitleAndTeacherByIdService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(courseId, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

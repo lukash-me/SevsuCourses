@@ -1,5 +1,7 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
+using labs_ud.Application.Get.Group;
+using labs_ud.Application.Get.Student;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +19,27 @@ public class GroupController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение всей информации о группе по id группы
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("{groupId:guid}")]
+    public async Task<ActionResult<Guid>> GetById(
+        [FromRoute] Guid groupId,
+        [FromServices] GetGroupByIdService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(groupId, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

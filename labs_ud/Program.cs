@@ -4,6 +4,8 @@ using labs_ud.Application.DataBase;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get;
 using labs_ud.Application.Get.Answer;
+using labs_ud.Application.Get.Course;
+using labs_ud.Application.Get.Group;
 using labs_ud.Application.Get.Mentor;
 using labs_ud.Application.Get.Student;
 using labs_ud.Application.Get.Tasks;
@@ -30,6 +32,12 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
+    .AddScoped<GetStudentsFioStatusByGroupIdService>()
+    .AddScoped<GetMentorFioByIdService>()
+    .AddScoped<GetTeacherFioByIdService>()
+    .AddScoped<GetTitleAndTeacherByIdService>()
+    .AddScoped<GetGroupByIdService>()
+    .AddScoped<GetGroupByStudentIdService>()
     .AddScoped<UpdateAnswerTextService>()
     .AddScoped<GetAnswerByTaskIdStudentIdService>()
     .AddScoped<GetMentorByLoginPasswordService>()

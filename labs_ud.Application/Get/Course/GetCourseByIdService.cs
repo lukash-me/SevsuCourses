@@ -3,7 +3,7 @@ using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
 using labs_ud.Application.Repositories;
 
-namespace labs_ud.Application.Get;
+namespace labs_ud.Application.Get.Course;
 
 public class GetCourseByIdService
 {

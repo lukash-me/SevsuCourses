@@ -40,6 +40,27 @@ public class MentorController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получение ФИО ментора по id ментора
+    /// </summary>
+    /// <param name="mentorId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("fio/{mentorId:guid}")]
+    public async Task<ActionResult<Guid>> GetFioByTeacherId(
+        [FromRoute] Guid mentorId,
+        [FromServices] GetMentorFioByIdService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(mentorId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<Guid>> Delete(
         [FromRoute] Guid id,
