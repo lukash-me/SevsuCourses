@@ -44,6 +44,17 @@ public class CourseRepository
         var courses = await _dbContext.Course.ToArrayAsync(cancellationToken);
         
         return courses;
+    }
+    
+    public async Task<Result<List<Course>, Error>> GetByTeacherId(
+        Guid teacherId, 
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _dbContext.Course
+            .Where(t => t.TeacherId == teacherId)
+            .ToListAsync(cancellationToken);
+        
+        return result;
     } 
     
     public Guid Delete(Course course, CancellationToken cancellationToken = default)

@@ -26,7 +26,7 @@ public class StudentController : ControllerBase
     }
     
     /// <summary>
-    /// Получить id студента по логину и паролю
+    /// Получение id студента по логину и паролю
     /// </summary>
     /// <param name="service"></param>
     /// <param name="request"></param>
@@ -81,6 +81,48 @@ public class StudentController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(groupId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение основной информации о студенте по id студента
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="studenId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("main-info/{studentId:guid}")]
+    public async Task<ActionResult<Guid>> GetMainInfo(
+        [FromServices] GetMainInfoService service,
+        [FromRoute] Guid studentId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(studentId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение номера телефона по id студента
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="studentId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("phone/{studentId:guid}")]
+    public async Task<ActionResult<Guid>> GetPhone(
+        [FromServices] GetPhoneService service,
+        [FromRoute] Guid studentId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(studentId, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

@@ -1,8 +1,6 @@
-using labs_ud.Application;
 using labs_ud.Application.Create;
 using labs_ud.Application.DataBase;
 using labs_ud.Application.Delete;
-using labs_ud.Application.Get;
 using labs_ud.Application.Get.Answer;
 using labs_ud.Application.Get.Course;
 using labs_ud.Application.Get.Group;
@@ -13,6 +11,7 @@ using labs_ud.Application.Get.Teacher;
 using labs_ud.Application.Get.Themes;
 using labs_ud.Application.Repositories;
 using labs_ud.Application.Update.Answer;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +37,13 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
+    .AddScoped<GetTitlesByTeacherIdService>()
+    .AddScoped<labs_ud.Application.Get.Teacher.GetPhoneService>()
+    .AddScoped<labs_ud.Application.Get.Mentor.GetPhoneService>()
+    .AddScoped<labs_ud.Application.Get.Student.GetPhoneService>()
+    .AddScoped<labs_ud.Application.Get.Teacher.GetMainInfoService>()
+    .AddScoped<labs_ud.Application.Get.Mentor.GetMainInfoService>()
+    .AddScoped<labs_ud.Application.Get.Student.GetMainInfoService>()
     .AddScoped<GetStudentsFioStatusByGroupIdService>()
     .AddScoped<GetMentorFioByIdService>()
     .AddScoped<GetTeacherFioByIdService>()

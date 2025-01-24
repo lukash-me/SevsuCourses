@@ -27,22 +27,6 @@ public class CourseController : ControllerBase
         return Ok(result.Value);
     }
     
-    [HttpDelete("{id:guid}")]
-    public async Task<ActionResult<Guid>> Delete(
-        [FromRoute] Guid id,
-        [FromServices] DeleteCourseService service,
-        CancellationToken cancellationToken = default)
-    {
-        var request = new DeleteCourseRequest(id);
-
-        var result = await service.Handle(request, cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error.ToResponse();
-        
-        return Ok(result.Value);
-    }
-    
     [HttpGet]
     public async Task<ActionResult<Guid>> GetAll(
         [FromServices] GetAllCoursesService service,
@@ -84,6 +68,43 @@ public class CourseController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(courseId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение названий всех курсов, которые ведет преподаватель по id преподавателя
+    /// </summary>
+    /// <param name="teacherId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("titles/{teacherId:guid}")]
+    public async Task<ActionResult<Guid>> GetTitlesByTeacherId(
+        [FromRoute] Guid teacherId,
+        [FromServices] GetTitlesByTeacherIdService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(teacherId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<Guid>> Delete(
+        [FromRoute] Guid id,
+        [FromServices] DeleteCourseService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new DeleteCourseRequest(id);
+
+        var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

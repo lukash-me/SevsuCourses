@@ -46,22 +46,6 @@ public class TeacherController : ControllerBase
         return Ok(result.Value);
     }
     
-    [HttpDelete("{id:guid}")]
-    public async Task<ActionResult<Guid>> Delete(
-        [FromRoute] Guid id,
-        [FromServices] DeleteTeacherService service,
-        CancellationToken cancellationToken = default)
-    {
-        var request = new DeleteTeacherRequest(id);
-
-        var result = await service.Handle(request, cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error.ToResponse();
-        
-        return Ok(result.Value);
-    }
-    
     /// <summary>
     /// Получение ФИО учителя по id учителя
     /// </summary>
@@ -76,6 +60,64 @@ public class TeacherController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(teacherId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение основной информации о преподавателе по id преподавателя
+    /// </summary>
+    /// <param name="teacherId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("main-info/{teacherId:guid}")]
+    public async Task<ActionResult<Guid>> GetMainInfo(
+        [FromRoute] Guid teacherId,
+        [FromServices] GetMainInfoService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(teacherId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение номера телефона по id преподавателя
+    /// </summary>
+    /// <param name="teacherId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("phone/{teacherId:guid}")]
+    public async Task<ActionResult<Guid>> GetPhone(
+        [FromRoute] Guid teacherId,
+        [FromServices] GetPhoneService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(teacherId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<Guid>> Delete(
+        [FromRoute] Guid id,
+        [FromServices] DeleteTeacherService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new DeleteTeacherRequest(id);
+
+        var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

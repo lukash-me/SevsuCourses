@@ -68,6 +68,48 @@ public class MentorController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получение основной информации о менторе по id ментора
+    /// </summary>
+    /// <param name="mentorId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("main-info/{mentorId:guid}")]
+    public async Task<ActionResult<Guid>> GetMainInfo(
+        [FromRoute] Guid mentorId,
+        [FromServices] GetMainInfoService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(mentorId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получить номер телефона по id ментора
+    /// </summary>
+    /// <param name="mentorId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("phone/{mentorId:guid}")]
+    public async Task<ActionResult<Guid>> GetPhone(
+        [FromRoute] Guid mentorId,
+        [FromServices] GetPhoneService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(mentorId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<Guid>> Delete(
         [FromRoute] Guid id,
