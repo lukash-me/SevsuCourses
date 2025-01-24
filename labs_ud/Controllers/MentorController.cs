@@ -26,6 +26,13 @@ public class MentorController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получить id ментора по логину и паролю
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpPost("login")]
     public async Task<ActionResult<Guid>> GetByLoginPassword(
         [FromServices] GetMentorByLoginPasswordService service,

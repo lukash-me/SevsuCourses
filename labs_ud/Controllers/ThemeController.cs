@@ -42,6 +42,13 @@ public class ThemeController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получить все темы по id курса
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="courseId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpGet("course/{courseId:guid}")]
     public async Task<ActionResult<Guid>> GetAllByCourse(
         [FromServices] GetThemesByCourseService service,

@@ -15,8 +15,7 @@ public class UpdateAnswerTextService
         _answerRepository = answerRepository;
         _unitOfWork = unitOfWork;
     }
-
-
+    
     public async Task<Result<Guid, Error>> Handle(
         UpdateAnswerTextRequest request,
         CancellationToken cancellationToken)

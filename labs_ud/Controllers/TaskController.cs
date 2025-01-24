@@ -41,6 +41,13 @@ public class TaskController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получить id и названия задач по id темы
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="themeId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpGet("theme/{themeId:guid}")]
     public async Task<ActionResult<Guid>> GetAllByTheme(
         [FromServices] GetTasksByThemeService service,

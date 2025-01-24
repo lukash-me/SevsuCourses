@@ -26,6 +26,14 @@ public class AnswerController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получение ответа по id задачи и id студента
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="taskId">id задачи</param>
+    /// <param name="studentId">id студента</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpGet("taskId={taskId:guid}&studentId={studentId:guid}")]
     public async Task<ActionResult<Guid>> GetByTaskIdStudentIdService(
         [FromServices] GetAnswerByTaskIdStudentIdService service,
@@ -42,6 +50,14 @@ public class AnswerController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Обновление текста ответа по id ответа
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpPut("{id:guid}/answerText")]
     public async Task<ActionResult<Guid>> UpdateAnswerText(
         [FromRoute] Guid id,

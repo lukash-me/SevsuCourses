@@ -25,6 +25,13 @@ public class TeacherController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Получить id преподавателя по логину и паролю
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpPost("login")]
     public async Task<ActionResult<Guid>> GetByLoginPassword(
         [FromServices] GetTeacherByLoginPasswordService service,
