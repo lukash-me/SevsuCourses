@@ -53,19 +53,44 @@ public class AnswerController : ControllerBase
     /// <summary>
     /// Обновление текста ответа по id ответа
     /// </summary>
-    /// <param name="id"></param>
+    /// <param name="answerId"></param>
     /// <param name="dto"></param>
     /// <param name="service"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpPut("{id:guid}/answerText")]
+    [HttpPut("{answerId:guid}/text")]
     public async Task<ActionResult<Guid>> UpdateAnswerText(
-        [FromRoute] Guid id,
+        [FromRoute] Guid answerId,
         [FromBody] UpdateAnswerTextDto dto,
         [FromServices] UpdateAnswerTextService service,
         CancellationToken cancellationToken = default)
     {
-        var request = new UpdateAnswerTextRequest(id, dto);
+        var request = new UpdateAnswerTextRequest(answerId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Обновление ответа ментора и оценки по id ответа студента
+    /// </summary>
+    /// <param name="answerId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("{answerId:guid}/reply-mark")]
+    public async Task<ActionResult<Guid>> UpdateReplyAndMark(
+        [FromRoute] Guid answerId,
+        [FromBody] UpdateReplyAndMarkDto dto,
+        [FromServices] UpdateReplyAndMarkService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdateReplyAndMarkRequest(answerId, dto);
 
         var result = await service.Handle(request, cancellationToken);
 

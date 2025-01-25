@@ -35,6 +35,12 @@ public class Answer
         AnswerText = newAnswerText;
     } 
     
+    public void UpdateReplyAndMark(string newReply, int newMark)
+    {
+        ReplyText = newReply;
+        Mark = newMark;
+    } 
+    
     public static Result<Answer, Error> Create(
         Guid taskId,
         Guid studentId,

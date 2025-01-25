@@ -5,6 +5,7 @@ using labs_ud.Application.Get.Answer;
 using labs_ud.Application.Get.Course;
 using labs_ud.Application.Get.Group;
 using labs_ud.Application.Get.Mentor;
+using labs_ud.Application.Get.Solution;
 using labs_ud.Application.Get.Student;
 using labs_ud.Application.Get.Tasks;
 using labs_ud.Application.Get.Teacher;
@@ -37,6 +38,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
+    .AddScoped<UpdateReplyAndMarkService>()
+    .AddScoped<GetAnswerService>()
     .AddScoped<GetTitlesByTeacherIdService>()
     .AddScoped<labs_ud.Application.Get.Teacher.GetPhoneService>()
     .AddScoped<labs_ud.Application.Get.Mentor.GetPhoneService>()

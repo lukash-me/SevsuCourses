@@ -1,5 +1,6 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
+using labs_ud.Application.Get.Solution;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,27 @@ public class SolutionController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получение эталонных ответов для задачи по id задачи
+    /// </summary>
+    /// <param name="taskId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("answer/{taskId:guid}")]
+    public async Task<ActionResult<Guid>> GetAnswer(
+        [FromRoute] Guid taskId,
+        [FromServices] GetAnswerService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(taskId, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

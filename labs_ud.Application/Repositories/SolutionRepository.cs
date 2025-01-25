@@ -38,6 +38,22 @@ public class SolutionRepository
         return solution;
     } 
     
+    public async Task<Result<List<Solution>, Error>> GetByTaskId(
+        TaskId taskId, 
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _dbContext.Solution
+            .Where(s => s.TaskId == taskId)
+            .ToListAsync(cancellationToken);
+        
+        if (result.Count == 0)
+        {
+            return Errors.Errors.General.NotFound(taskId.Value);
+        }
+        
+        return result;
+    } 
+    
     public Guid Delete(Solution solution, CancellationToken cancellationToken = default)
     {
         _dbContext.Solution.Remove(solution);
