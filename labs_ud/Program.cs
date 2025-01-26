@@ -7,7 +7,7 @@ using labs_ud.Application.Get.Group;
 using labs_ud.Application.Get.Mentor;
 using labs_ud.Application.Get.Solution;
 using labs_ud.Application.Get.Student;
-using labs_ud.Application.Get.Tasks;
+using labs_ud.Application.Get.Task;
 using labs_ud.Application.Get.Teacher;
 using labs_ud.Application.Get.Themes;
 using labs_ud.Application.Repositories;
@@ -23,6 +23,7 @@ builder.Services.AddSwaggerGen(options =>
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
+    options.CustomSchemaIds(type => type.FullName);
 });
 
 builder.Services.AddCors(options =>
@@ -38,12 +39,17 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
+    .AddScoped<labs_ud.Application.Update.Mentor.UpdateMainInfoService>()
+    .AddScoped<labs_ud.Application.Update.Student.UpdateMainInfoService>()
+    .AddScoped<labs_ud.Application.Update.Teacher.UpdateMainInfoService>()
+    .AddScoped<labs_ud.Application.Update.Task.UpdateMainInfoService>()
     .AddScoped<UpdateReplyAndMarkService>()
     .AddScoped<GetAnswerService>()
     .AddScoped<GetTitlesByTeacherIdService>()
     .AddScoped<labs_ud.Application.Get.Teacher.GetPhoneService>()
     .AddScoped<labs_ud.Application.Get.Mentor.GetPhoneService>()
     .AddScoped<labs_ud.Application.Get.Student.GetPhoneService>()
+    .AddScoped<labs_ud.Application.Get.Task.GetMainInfoService>()
     .AddScoped<labs_ud.Application.Get.Teacher.GetMainInfoService>()
     .AddScoped<labs_ud.Application.Get.Mentor.GetMainInfoService>()
     .AddScoped<labs_ud.Application.Get.Student.GetMainInfoService>()

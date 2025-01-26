@@ -36,6 +36,20 @@ public class Mentor
     public string Description { get; set; }
     public string Login { get; set; }
     public string Password { get; set; }
+
+    public void UpdateMainInfo(
+        string fio,
+        string email,
+        string education,
+        string photo,
+        string description)
+    {
+        Fio = fio;
+        Email = email;
+        Education = education;
+        Photo = photo;
+        Description = description;
+    }
     
     public static Result<Mentor, Error> Create(
         string fio,

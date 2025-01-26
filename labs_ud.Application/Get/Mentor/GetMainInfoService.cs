@@ -14,7 +14,7 @@ public class GetMainInfoService
         _mentorRepository = mentorRepository;
     }
 
-    public async Task<Result<MentorMainInfoResponse, Error>> Handle(MentorId mentorId, CancellationToken cancellationToken = default)
+    public async Task<Result<MainInfoDto, Error>> Handle(MentorId mentorId, CancellationToken cancellationToken = default)
     {
         var mentorResult = await _mentorRepository.GetById(mentorId, cancellationToken);
         var mentor = mentorResult.Value;
@@ -25,16 +25,8 @@ public class GetMainInfoService
         var photo = mentor.Photo;
         var description = mentor.Description;
         
-        var response = new MentorMainInfoResponse(fio, email, education, photo, description);
+        var response = new MainInfoDto(fio, email, education, photo, description);
         
         return response;
     }
 }
-
-public record MentorMainInfoResponse(
-    string Fio,
-    string Email,
-    string Education,
-    string Photo,
-    string Description
-    );

@@ -38,6 +38,22 @@ public class Teacher
     public string Description { get; set; }
     public string Login { get; set; }
     public string Password { get; set; }
+
+    public void UpdateMainInfo(
+        string fio,
+        int experience,
+        string email,
+        string education,
+        string description,
+        string photo)
+    {
+        Fio = fio;
+        Experience = experience;
+        Email = email;
+        Education = education;
+        Description = description;
+        Photo = photo;
+    }
     
     public static Result<Teacher, Error> Create(
         string fio,

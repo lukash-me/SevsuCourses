@@ -2,7 +2,7 @@ using CSharpFunctionalExtensions;
 using labs_ud.Application.Errors;
 using labs_ud.Application.Repositories;
 
-namespace labs_ud.Application.Get.Tasks;
+namespace labs_ud.Application.Get.Task;
 
 public class GetTasksByThemeService
 {

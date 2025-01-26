@@ -1,6 +1,7 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get.Teacher;
+using labs_ud.Application.Update.Teacher;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -102,6 +103,31 @@ public class TeacherController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(teacherId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Изменить основную информацию о преподавателе по id преподавателя
+    /// </summary>
+    /// <param name="teacherId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("main-info/{teacherId:guid}")]
+    public async Task<ActionResult<Guid>> UpdateMainInfo(
+        [FromRoute] Guid teacherId,
+        [FromBody] MainInfoDto dto,
+        [FromServices] UpdateMainInfoService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdateMainInfoRequest(teacherId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

@@ -1,8 +1,8 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get.Mentor;
+using labs_ud.Application.Update.Mentor;
 using labs_ud.Extensions;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace labs_ud.Controllers;
@@ -103,6 +103,31 @@ public class MentorController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(mentorId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Изменить основную информацию о менторе по id ментора
+    /// </summary>
+    /// <param name="mentorId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("main-info/{mentorId:guid}")]
+    public async Task<ActionResult<Guid>> UpdateMainInfo(
+        [FromRoute] Guid mentorId,
+        [FromBody] MainInfoDto dto,
+        [FromServices] UpdateMainInfoService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdateMainInfoRequest(mentorId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

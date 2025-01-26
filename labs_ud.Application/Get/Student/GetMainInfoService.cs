@@ -14,7 +14,7 @@ public class GetMainInfoService
         _studentRepository = studentRepository;
     }
 
-    public async Task<Result<MainInfoResponse, Error>> Handle(StudentId studentId, CancellationToken cancellationToken = default)
+    public async Task<Result<MainInfoDto, Error>> Handle(StudentId studentId, CancellationToken cancellationToken = default)
     {
         var studentResult = await _studentRepository.GetById(studentId, cancellationToken);
         var student = studentResult.Value;
@@ -23,14 +23,8 @@ public class GetMainInfoService
         var photo = student.Photo;
         var email = student.Email;
 
-        var response = new MainInfoResponse(fio, photo, email);
+        var response = new MainInfoDto(fio, photo, email);
         
         return response;
     }
 }
-
-public record MainInfoResponse(
-    string Fio,
-    string Photo,
-    string Email
-    );

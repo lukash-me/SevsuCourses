@@ -39,6 +39,13 @@ public class Student
     public string Email { get; set; }
     public string Login { get; set; }
     public string Password { get; set; }
+
+    public void UpdateMainInfo(string fio, string photo, string email)
+    {
+        Fio = fio;
+        Photo = photo;
+        Email = email;
+    }
     
     public static Result<Student, Error> Create(
         Guid groupId,
