@@ -2,6 +2,7 @@ using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get.Mentor;
 using labs_ud.Application.Update.Mentor;
+using labs_ud.Application.Update.Share;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -126,6 +127,31 @@ public class MentorController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var request = new UpdateMainInfoRequest(mentorId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Изменение номера телефона ментора по id ментора
+    /// </summary>
+    /// <param name="mentorId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("phone/{mentorId:guid}")]
+    public async Task<ActionResult<Guid>> UpdatePhone(
+        [FromRoute] Guid mentorId,
+        [FromBody] PhoneDto dto,
+        [FromServices] UpdatePhoneService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdatePhoneRequest(mentorId, dto);
 
         var result = await service.Handle(request, cancellationToken);
 

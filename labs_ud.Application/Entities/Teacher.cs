@@ -55,6 +55,11 @@ public class Teacher
         Photo = photo;
     }
     
+    public void UpdatePhone(string phone)
+    {
+        Phone = phone;
+    }
+    
     public static Result<Teacher, Error> Create(
         string fio,
         int experience,

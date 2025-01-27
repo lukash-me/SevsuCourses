@@ -47,6 +47,11 @@ public class Student
         Email = email;
     }
     
+    public void UpdatePhone(string phone)
+    {
+        Phone = phone;
+    }
+    
     public static Result<Student, Error> Create(
         Guid groupId,
         string fio,

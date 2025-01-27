@@ -39,6 +39,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
+    .AddScoped<labs_ud.Application.Update.Teacher.UpdatePhoneService>()
+    .AddScoped<labs_ud.Application.Update.Mentor.UpdatePhoneService>()
+    .AddScoped<labs_ud.Application.Update.Student.UpdatePhoneService>()
     .AddScoped<labs_ud.Application.Update.Mentor.UpdateMainInfoService>()
     .AddScoped<labs_ud.Application.Update.Student.UpdateMainInfoService>()
     .AddScoped<labs_ud.Application.Update.Teacher.UpdateMainInfoService>()

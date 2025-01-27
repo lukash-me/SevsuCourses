@@ -51,6 +51,11 @@ public class Mentor
         Description = description;
     }
     
+    public void UpdatePhone(string phone)
+    {
+        Phone = phone;
+    }
+    
     public static Result<Mentor, Error> Create(
         string fio,
         string phone,

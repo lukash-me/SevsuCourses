@@ -1,6 +1,7 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get.Student;
+using labs_ud.Application.Update.Share;
 using labs_ud.Application.Update.Student;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -147,6 +148,31 @@ public class StudentController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var request = new UpdateMainInfoRequest(studentId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Обновление номера телефона студента по id студента
+    /// </summary>
+    /// <param name="studentId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("phone/{studentId:guid}")]
+    public async Task<ActionResult<Guid>> UpdatePhone(
+        [FromRoute] Guid studentId,
+        [FromBody] PhoneDto dto,
+        [FromServices] UpdatePhoneService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdatePhoneRequest(studentId, dto);
 
         var result = await service.Handle(request, cancellationToken);
 
