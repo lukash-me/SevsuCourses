@@ -18,10 +18,10 @@ public class CreateAnswerService
     {
         var taskId = request.TaskId;
         var studentId = request.StudentId;
-        var mark = request.Mark;
-        var replyText = request.ReplyText;
+        int mark = 0;
+        string? replyText = null;
         var answerText = request.AnswerText;
-        var dateSent = request.DateSent;
+        var dateSent = DateTime.UtcNow;
 
         var answerResult = Answer.Create(
             taskId,

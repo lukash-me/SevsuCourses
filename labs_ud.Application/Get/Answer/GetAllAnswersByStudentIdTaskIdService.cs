@@ -17,6 +17,10 @@ public class GetAllAnswersByStudentIdTaskIdService
     public async Task<Result<List<AnswerResponse>, Error>> Handle(AnswersRequest request, CancellationToken cancellationToken = default)
     {
         var answerResult = await _answerRepository.GetByTaskIdStudentId(request, cancellationToken);
+
+        if (answerResult.IsFailure) 
+            return answerResult.Error;
+        
         var answers = answerResult.Value;
 
         var response = new List<AnswerResponse>();
