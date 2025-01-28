@@ -34,7 +34,7 @@ public class AnswerController : ControllerBase
     /// <param name="studentId">id студента</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpGet("taskId={taskId:guid}&studentId={studentId:guid}")]
+    [HttpGet("answer-all/taskId={taskId:guid}&studentId={studentId:guid}")]
     public async Task<ActionResult<Guid>> GetAllByStudentIdTaskId(
         [FromRoute] Guid studentId,
         [FromRoute] Guid taskId, 
@@ -44,6 +44,37 @@ public class AnswerController : ControllerBase
         var request = new AnswersRequest(studentId, taskId);
         var result = await service.Handle(request, cancellationToken);
 
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получить последний по дате ответ по id студента и id задачи
+    /// </summary>
+    /// <param name="studentId"></param>
+    /// <param name="taskId"></param>
+    /// <param name="allAnswersService"></param>
+    /// <param name="lastAnswerService"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("answer-last/taskId={taskId:guid}&studentId={studentId:guid}")]
+    public async Task<ActionResult<Guid>> GetLastByStudentIdTaskId(
+        [FromRoute] Guid studentId,
+        [FromRoute] Guid taskId, 
+        [FromServices] GetAllAnswersByStudentIdTaskIdService allAnswersService,
+        [FromServices] GetLastAnswerService lastAnswerService,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new AnswersRequest(studentId, taskId);
+        var allAnswers = await allAnswersService.Handle(request, cancellationToken);
+        
+        if (allAnswers.IsFailure)
+            return allAnswers.Error.ToResponse();
+        
+        var result = await lastAnswerService.Handle(allAnswers.Value, cancellationToken);
+        
         if (result.IsFailure)
             return result.Error.ToResponse();
         
