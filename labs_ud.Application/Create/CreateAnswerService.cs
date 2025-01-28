@@ -17,24 +17,19 @@ public class CreateAnswerService
     public async Task<Result<Guid, Error>> Handle(CreateAnswerRequest request, CancellationToken cancellationToken)
     {
         var taskId = request.TaskId;
-
         var studentId = request.StudentId;
-        
-        var attempNumber  = request.AttempNumber;
-
         var mark = request.Mark;
-        
         var replyText = request.ReplyText;
-        
         var answerText = request.AnswerText;
+        var dateSent = request.DateSent;
 
         var answerResult = Answer.Create(
             taskId,
             studentId,
-            attempNumber,
             mark,
             replyText,
-            answerText
+            answerText,
+            dateSent
         );
 
         if (answerResult.IsFailure)

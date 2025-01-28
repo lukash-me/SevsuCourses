@@ -63,7 +63,7 @@ builder.Services
     .AddScoped<GetGroupByIdService>()
     .AddScoped<GetGroupByStudentIdService>()
     .AddScoped<UpdateAnswerTextService>()
-    .AddScoped<GetAnswerByTaskIdStudentIdService>()
+    .AddScoped<GetAllAnswersByStudentIdTaskIdService>()
     .AddScoped<GetMentorByLoginPasswordService>()
     .AddScoped<GetTeacherByLoginPasswordService>()
     .AddScoped<GetStudentByLoginPasswordService>()

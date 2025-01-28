@@ -4,7 +4,7 @@ public record CreateAnswerRequest
 (
     Guid TaskId,
     Guid StudentId,
-    int AttempNumber,
     int Mark,
     string ReplyText,
-    string AnswerText);
+    string AnswerText,
+    DateTime DateSent);

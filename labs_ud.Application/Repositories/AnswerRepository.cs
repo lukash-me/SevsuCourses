@@ -39,12 +39,18 @@ public class AnswerRepository
         return answer;
     } 
     
-    public async Task<Result<Answer?, Error>> GetByTaskIdStudentId(
-        AnswerRequest request, 
+    public async Task<Result<List<Answer>, Error>> GetByTaskIdStudentId(
+        AnswersRequest request, 
         CancellationToken cancellationToken = default)
     {
         var result = await _dbContext.Answer
-            .FirstOrDefaultAsync(a => a.TaskId == request.TaskId && a.StudentId == request.StudentId, cancellationToken);
+            .Where(a => a.TaskId == request.TaskId && a.StudentId == request.StudentId)
+            .ToListAsync(cancellationToken);
+        
+        if (result.Count == 0)
+        {
+            return Errors.Errors.General.NotFound();
+        }
         
         return result;
     } 

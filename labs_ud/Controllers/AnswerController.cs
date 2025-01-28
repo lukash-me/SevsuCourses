@@ -27,7 +27,7 @@ public class AnswerController : ControllerBase
     }
     
     /// <summary>
-    /// Получение ответа по id задачи и id студента
+    /// Получение всех ответов по id студента и id задачи
     /// </summary>
     /// <param name="service"></param>
     /// <param name="taskId">id задачи</param>
@@ -35,13 +35,13 @@ public class AnswerController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet("taskId={taskId:guid}&studentId={studentId:guid}")]
-    public async Task<ActionResult<Guid>> GetByTaskIdStudentIdService(
-        [FromServices] GetAnswerByTaskIdStudentIdService service,
-        [FromRoute] Guid taskId, 
+    public async Task<ActionResult<Guid>> GetAllByStudentIdTaskId(
         [FromRoute] Guid studentId,
+        [FromRoute] Guid taskId, 
+        [FromServices] GetAllAnswersByStudentIdTaskIdService service,
         CancellationToken cancellationToken = default)
     {
-        var request = new AnswerRequest(taskId, studentId);
+        var request = new AnswersRequest(studentId, taskId);
         var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
