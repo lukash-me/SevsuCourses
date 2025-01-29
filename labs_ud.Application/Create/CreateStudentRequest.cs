@@ -1,7 +1,6 @@
 namespace labs_ud.Application.Create;
 
 public record CreateStudentRequest(
-    Guid GroupId,
     string Fio,
     bool IsExpelled,
     string Photo,

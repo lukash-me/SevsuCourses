@@ -17,6 +17,7 @@ public class ApplicationDbContext(IConfiguration configuration) : DbContext
     public DbSet<Group> Group { get; set; }
     public DbSet<Student> Student { get; set; }
     public DbSet<Answer> Answer { get; set; }
+    public DbSet<StudentGroup> StudentGroup { get; set; }
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -37,6 +38,7 @@ public class ApplicationDbContext(IConfiguration configuration) : DbContext
         modelBuilder.Entity<Solution>().ToTable("Solution", "admin");
         modelBuilder.Entity<Group>().ToTable("Group", "admin");
         modelBuilder.Entity<Student>().ToTable("Student", "admin");
+        modelBuilder.Entity<StudentGroup>().ToTable("Student_Group", "admin");
         modelBuilder.Entity<Answer>().ToTable("Answer", "admin");
         base.OnModelCreating(modelBuilder);
     }

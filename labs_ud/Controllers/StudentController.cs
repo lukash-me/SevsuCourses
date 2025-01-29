@@ -1,6 +1,7 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get.Student;
+using labs_ud.Application.Get.StudentGroup;
 using labs_ud.Application.Update.Share;
 using labs_ud.Application.Update.Student;
 using labs_ud.Extensions;
@@ -47,43 +48,30 @@ public class StudentController : ControllerBase
         
         return Ok(result.Value);
     }
-    
-    /// <summary>
-    /// Получение id группы, в которой обучается студент по его id
-    /// </summary>
-    /// <param name="service"></param>
-    /// <param name="studentId"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    [HttpGet("group/{studentId:guid}")]
-    public async Task<ActionResult<Guid>> GetGroupId(
-        [FromServices] GetGroupByStudentIdService service,
-        [FromRoute] Guid studentId,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await service.Handle(studentId, cancellationToken);
-
-        if (result.IsFailure)
-            return result.Error.ToResponse();
         
-        return Ok(result.Value);
-    }
-    
     /// <summary>
     /// Получение id, ФИО, статуса всех студентов группы по id группы
     /// </summary>
-    /// <param name="service"></param>
+    /// <param name="infoService"></param>
+    /// <param name="allStudentsService"></param>
     /// <param name="groupId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet("all-id-fio-status/{groupId:guid}")]
     public async Task<ActionResult<Guid>> GetGroupId(
-        [FromServices] GetStudentsFioStatusByGroupIdService service,
+        [FromServices] GetStudentsFioStatusByStudentIdService infoService,
+        [FromServices] GetStudentsByGroupIdService allStudentsService,
         [FromRoute] Guid groupId,
         CancellationToken cancellationToken = default)
     {
-        var result = await service.Handle(groupId, cancellationToken);
+        var studentsResult = await allStudentsService.Handle(groupId, cancellationToken);
+        
+        if (studentsResult.IsFailure)
+            return studentsResult.Error.ToResponse();
 
+        var students = studentsResult.Value;
+        
+        var result = await infoService.Handle(students, cancellationToken);
         if (result.IsFailure)
             return result.Error.ToResponse();
         
@@ -94,7 +82,7 @@ public class StudentController : ControllerBase
     /// Получение основной информации о студенте по id студента
     /// </summary>
     /// <param name="service"></param>
-    /// <param name="studenId"></param>
+    /// <param name="studentId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet("main-info/{studentId:guid}")]

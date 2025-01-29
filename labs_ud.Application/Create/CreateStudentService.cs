@@ -16,7 +16,6 @@ public class CreateStudentService
     
     public async Task<Result<Guid, Error>> Handle(CreateStudentRequest request, CancellationToken cancellationToken)
     {
-        var groupId = request.GroupId;
 
         var fio = request.Fio;
         
@@ -35,7 +34,6 @@ public class CreateStudentService
         var password = request.Password;
 
         var studentResult = Student.Create(
-            groupId,
             fio,
             isExpelled,
             photo,

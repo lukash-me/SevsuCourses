@@ -1,12 +1,15 @@
 using labs_ud.Application.Create;
+using labs_ud.Application.Create.StudentGroup;
 using labs_ud.Application.DataBase;
 using labs_ud.Application.Delete;
+using labs_ud.Application.Delete.StudentGroup;
 using labs_ud.Application.Get.Answer;
 using labs_ud.Application.Get.Course;
 using labs_ud.Application.Get.Group;
 using labs_ud.Application.Get.Mentor;
 using labs_ud.Application.Get.Solution;
 using labs_ud.Application.Get.Student;
+using labs_ud.Application.Get.StudentGroup;
 using labs_ud.Application.Get.Task;
 using labs_ud.Application.Get.Teacher;
 using labs_ud.Application.Get.Themes;
@@ -58,12 +61,15 @@ builder.Services
     .AddScoped<labs_ud.Application.Get.Teacher.GetMainInfoService>()
     .AddScoped<labs_ud.Application.Get.Mentor.GetMainInfoService>()
     .AddScoped<labs_ud.Application.Get.Student.GetMainInfoService>()
-    .AddScoped<GetStudentsFioStatusByGroupIdService>()
     .AddScoped<GetMentorFioByIdService>()
     .AddScoped<GetTeacherFioByIdService>()
     .AddScoped<GetTitleAndTeacherByIdService>()
     .AddScoped<GetGroupByIdService>()
-    .AddScoped<GetGroupByStudentIdService>()
+    .AddScoped<GetGroupsByStudentIdService>()
+    .AddScoped<GetStudentsFioStatusByStudentIdService>()
+    .AddScoped<GetStudentsByGroupIdService>()
+    .AddScoped<CreateStudentGroupService>()
+    .AddScoped<DeleteStudentGroupService>()
     .AddScoped<UpdateAnswerTextService>()
     .AddScoped<GetLastAnswerService>()
     .AddScoped<GetAllAnswersByStudentIdTaskIdService>()
@@ -105,6 +111,7 @@ builder.Services
     .AddScoped<GroupRepository>()
     .AddScoped<StudentRepository>()
     .AddScoped<AnswerRepository>()
+    .AddScoped<StudentGroupRepository>()
     .AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();

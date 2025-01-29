@@ -7,7 +7,6 @@ namespace labs_ud.Application.Entities;
 public class Student
 {
     public Student(
-        Guid groupId,
         string fio,
         bool isExpelled,
         string photo,
@@ -18,7 +17,6 @@ public class Student
         string password)
     {
         Id = StudentId.NewStudentId();
-        GroupId = groupId;
         Fio = fio;
         IsExpelled = isExpelled;
         Photo = photo;
@@ -30,7 +28,6 @@ public class Student
     }
 
     public Guid Id { get; set; }
-    public Guid GroupId { get; set; }
     public string Fio { get; set; }
     public bool IsExpelled { get; set; }
     public string Photo { get; set; }
@@ -53,7 +50,6 @@ public class Student
     }
     
     public static Result<Student, Error> Create(
-        Guid groupId,
         string fio,
         bool isExpelled,
         string photo,
@@ -65,7 +61,6 @@ public class Student
     )
     {
         var student = new Student(
-            groupId,
             fio,
             isExpelled,
             photo,
