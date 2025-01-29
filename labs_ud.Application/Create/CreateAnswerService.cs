@@ -22,6 +22,7 @@ public class CreateAnswerService
         string? replyText = null;
         var answerText = request.AnswerText;
         var dateSent = DateTime.UtcNow;
+        DateTime? dateReplied = null;
 
         var answerResult = Answer.Create(
             taskId,
@@ -29,7 +30,8 @@ public class CreateAnswerService
             mark,
             replyText,
             answerText,
-            dateSent
+            dateSent,
+            dateReplied
         );
 
         if (answerResult.IsFailure)

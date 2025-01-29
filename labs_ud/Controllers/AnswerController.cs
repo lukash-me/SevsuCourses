@@ -1,6 +1,7 @@
 using labs_ud.Application.Create;
 using labs_ud.Application.Delete;
 using labs_ud.Application.Get.Answer;
+using labs_ud.Application.Get.Task;
 using labs_ud.Application.Update.Answer;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +35,7 @@ public class AnswerController : ControllerBase
     /// <param name="studentId">id студента</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpGet("answer-all/taskId={taskId:guid}&studentId={studentId:guid}")]
+    [HttpGet("all/taskId={taskId:guid}&studentId={studentId:guid}")]
     public async Task<ActionResult<Guid>> GetAllByStudentIdTaskId(
         [FromRoute] Guid studentId,
         [FromRoute] Guid taskId, 
@@ -51,6 +52,69 @@ public class AnswerController : ControllerBase
     }
     
     /// <summary>
+    /// Получить лучший ответ на задачу по id студента и id задачи
+    /// </summary>
+    /// <param name="studentId"></param>
+    /// <param name="taskId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("best/taskId={taskId:guid}&studentId={studentId:guid}")]
+    public async Task<ActionResult<Guid>> GetStatusBestMarkDatesByStudentIdTaskId(
+        [FromRoute] Guid studentId,
+        [FromRoute] Guid taskId, 
+        [FromServices] GetStatusBestMarkDatesByStudentIdTaskIdService bestAnswerService,
+        [FromServices] GetAllAnswersByStudentIdTaskIdService allAnswersService,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new AnswersRequest(studentId, taskId);
+        
+        var answersResult = allAnswersService.Handle(request, cancellationToken).Result;
+
+        if (answersResult.IsFailure)
+            return answersResult.Error.ToResponse();
+        
+        var result = await bestAnswerService.Handle(answersResult.Value, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Получить все лучшие ответы для темы по id темы и id пользователя
+    /// </summary>
+    /// <param name="studentId"></param>
+    /// <param name="themeId"></param>
+    /// <param name="allTasksByThemeService"></param>
+    /// <param name="bestAnswersToThemeService"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("best/theme/themeId={themeId:guid}&studentId={studentId:guid}")]
+    public async Task<ActionResult<Guid>> GetBestAnswersToThemeTasks(
+        [FromRoute] Guid studentId,
+        [FromRoute] Guid themeId,
+        [FromServices] GetTasksByThemeService allTasksByThemeService,
+        [FromServices] GetBestAnswersToThemeService bestAnswersToThemeService,
+        CancellationToken cancellationToken = default)
+    {
+        var tasksResult = allTasksByThemeService.Handle(themeId, cancellationToken).Result;
+        
+        if (tasksResult.IsFailure)
+            return tasksResult.Error.ToResponse();
+        
+        var request = new BulkAnswersRequest(studentId, tasksResult.Value);
+        
+        var result = bestAnswersToThemeService.Handle(request, cancellationToken).Result;
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
     /// Получить последний по дате ответ по id студента и id задачи
     /// </summary>
     /// <param name="studentId"></param>
@@ -59,7 +123,7 @@ public class AnswerController : ControllerBase
     /// <param name="lastAnswerService"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpGet("answer-last/taskId={taskId:guid}&studentId={studentId:guid}")]
+    [HttpGet("last/taskId={taskId:guid}&studentId={studentId:guid}")]
     public async Task<ActionResult<Guid>> GetLastByStudentIdTaskId(
         [FromRoute] Guid studentId,
         [FromRoute] Guid taskId, 

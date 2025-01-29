@@ -30,7 +30,8 @@ public class GetAllAnswersByStudentIdTaskIdService
             var replyText = answer.ReplyText;
             var answerText = answer.AnswerText;
             var dateSent = answer.DateSent;
-            var answerResponse = new AnswerResponse(mark, replyText, answerText, dateSent); 
+            var dateReplied = answer.DateReplied;
+            var answerResponse = new AnswerResponse(mark, replyText, answerText, dateSent, dateReplied); 
             
             response.Add(answerResponse);
         }
@@ -41,9 +42,10 @@ public class GetAllAnswersByStudentIdTaskIdService
 
 public record AnswerResponse(
     int Mark,
-    string ReplyText,
+    string? ReplyText,
     string AnswerText,
-    DateTime DateSent
+    DateTime DateSent,
+    DateTime? DateReplied
     );
 
 public record AnswersRequest(

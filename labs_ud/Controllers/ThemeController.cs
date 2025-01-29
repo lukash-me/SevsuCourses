@@ -26,15 +26,20 @@ public class ThemeController : ControllerBase
         return Ok(result.Value);
     }
     
-    [HttpDelete("{id:guid}")]
-    public async Task<ActionResult<Guid>> Delete(
-        [FromRoute] Guid id,
-        [FromServices] DeleteThemeService service,
+    /// <summary>
+    /// Получить все темы по id курса
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="courseId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("all/{courseId:guid}")]
+    public async Task<ActionResult<Guid>> GetAllByCourse(
+        [FromServices] GetThemesByCourseService service,
+        [FromRoute] Guid courseId,
         CancellationToken cancellationToken = default)
     {
-        var request = new DeleteThemeRequest(id);
-
-        var result = await service.Handle(request, cancellationToken);
+        var result = await service.Handle(courseId, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();
@@ -43,15 +48,15 @@ public class ThemeController : ControllerBase
     }
     
     /// <summary>
-    /// Получить все темы по id курса
+    /// Получить все id и названия тем по id курса
     /// </summary>
     /// <param name="service"></param>
     /// <param name="courseId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpGet("course/{courseId:guid}")]
-    public async Task<ActionResult<Guid>> GetAllByCourse(
-        [FromServices] GetThemesByCourseService service,
+    [HttpGet("all/titles/{courseId:guid}")]
+    public async Task<ActionResult<Guid>> GetAllIdTitlesByCourse(
+        [FromServices] GetAllThemesIdTitlesByCourseIdService service,
         [FromRoute] Guid courseId,
         CancellationToken cancellationToken = default)
     {
@@ -70,6 +75,22 @@ public class ThemeController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(id, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<Guid>> Delete(
+        [FromRoute] Guid id,
+        [FromServices] DeleteThemeService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new DeleteThemeRequest(id);
+
+        var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

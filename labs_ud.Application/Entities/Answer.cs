@@ -12,7 +12,8 @@ public class Answer
         int mark,
         string? replyText,
         string answerText,
-        DateTime dateSent)
+        DateTime dateSent,
+        DateTime? dateReplied)
     {
         Id = AnswerId.NewAnswerId();
         TaskId = taskId;
@@ -21,6 +22,7 @@ public class Answer
         ReplyText = replyText;
         AnswerText = answerText;
         DateSent = dateSent;
+        DateReplied = dateReplied;
     }
     public Guid Id { get; set; }
     public Guid TaskId { get; set; }
@@ -29,6 +31,7 @@ public class Answer
     public string? ReplyText { get; set; }
     public string AnswerText { get; set; }
     public DateTime DateSent { get; set; }
+    public DateTime? DateReplied { get; set; }
 
     public void UpdateAnswerText(string newAnswerText)
     {
@@ -47,7 +50,8 @@ public class Answer
         int mark,
         string? replyText,
         string answerText,
-        DateTime dateSent
+        DateTime dateSent,
+        DateTime? dateReplied
     )
     {
         var answer = new Answer(
@@ -56,7 +60,8 @@ public class Answer
             mark,
             replyText,
             answerText,
-            dateSent
+            dateSent,
+            dateReplied
         );
         
         return answer;
