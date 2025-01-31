@@ -9,9 +9,9 @@ public class Theme
     public Theme(
         Guid courseId,
         string title,
-        string description,
+        string? description,
         string? text,
-        string photo,
+        string? photo,
         int number)
     {
         Id = ThemeId.NewThemeId();
@@ -26,17 +26,25 @@ public class Theme
     public Guid Id { get; set; }
     public Guid CourseId { get; set; }
     public string Title { get; set; }
-    public string Description { get; set; }
+    public string? Description { get; set; }
     public string? Text { get; set; }
-    public string Photo { get; set; }
+    public string? Photo { get; set; }
     public int Number { get; set; }
+
+    public void UpdateMainInfo(string title, string? description, string? text, string? photo)
+    {
+        Title = title;
+        Description = description;
+        Text = text;
+        Photo = photo;
+    }
     
     public static Result<Theme, Error> Create(
         Guid courseId,
         string title,
-        string description,
+        string? description,
         string? text,
-        string photo,
+        string? photo,
         int number
     )
     {

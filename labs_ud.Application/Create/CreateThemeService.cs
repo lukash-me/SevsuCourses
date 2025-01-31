@@ -17,15 +17,10 @@ public class CreateThemeService
     public async Task<Result<Guid, Error>> Handle(CreateThemeRequest request, CancellationToken cancellationToken)
     {
         var courseId = request.CourseId;
-
-        var title = request.Title;
-        
-        var description  = request.Description;
-
-        var text = request.Text;
-
-        var photo = request.Photo;
-
+        var title = request.Dto.Title;
+        var description  = request.Dto.Description;
+        var text = request.Dto.Text;
+        var photo = request.Dto.Photo;
         var number = request.Number;
 
         var themeResult = Theme.Create(
