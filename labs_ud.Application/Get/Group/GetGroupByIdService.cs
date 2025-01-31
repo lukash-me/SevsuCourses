@@ -36,7 +36,7 @@ public class GetGroupByIdService
 public record GroupResponse(
     Guid Id,
     Guid CourseId,
-    Guid MentorId,
+    Guid? MentorId,
     DateOnly Start,
     DateOnly End,
     string Status

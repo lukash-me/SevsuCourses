@@ -6,7 +6,7 @@ namespace labs_ud.Application.Entities;
 
 public class Group
 {
-    public Group(Guid courseId, Guid mentorId, DateOnly start, DateOnly end, string status)
+    public Group(Guid courseId, Guid? mentorId, DateOnly start, DateOnly end, string status)
     {
         Id = GroupId.NewGroupId();
         CourseId = courseId;
@@ -18,14 +18,14 @@ public class Group
 
     public Guid Id { get; set; }
     public Guid CourseId { get; set; }
-    public Guid MentorId { get; set; }
+    public Guid? MentorId { get; set; }
     public DateOnly Start { get; set; }
     public DateOnly End { get; set; }
     public string Status { get; set; }
     
     public static Result<Group, Error> Create(
         Guid courseId,
-        Guid mentorId,
+        Guid? mentorId,
         DateOnly start,
         DateOnly end,
         string status

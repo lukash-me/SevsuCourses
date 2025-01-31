@@ -69,6 +69,7 @@ builder.Services
     .AddScoped<GetStudentsFioStatusByStudentIdService>()
     .AddScoped<GetStudentsByGroupIdService>()
     .AddScoped<CreateStudentGroupService>()
+    .AddScoped<CreateBulkService>()
     .AddScoped<DeleteStudentGroupService>()
     .AddScoped<UpdateAnswerTextService>()
     .AddScoped<GetLastAnswerService>()

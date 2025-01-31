@@ -22,11 +22,35 @@ public class StudentGroupController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<ActionResult<Guid>> CreateStudentGroup(
+    public async Task<ActionResult<Guid>> Create(
         [FromServices] CreateStudentGroupService service,
         [FromBody] CreateStudentGroupRequest request,
         CancellationToken cancellationToken = default)
     {
+        var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Добавление множества студентов в группу по id группы и id студентов
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="groupId"></param>
+    /// <param name="dto"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPost("bulk/{groupId:guid}")]
+    public async Task<ActionResult<Guid>> CreateBulk(
+        [FromServices] CreateBulkService service,
+        [FromRoute] Guid groupId,
+        [FromBody] CreateBulkStudentGroupDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new CreateBulkStudentGroupRequest(groupId, dto);
         var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
