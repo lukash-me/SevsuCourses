@@ -53,7 +53,7 @@ builder.Services
     .AddScoped<GetAnswerService>()
     .AddScoped<GetBestAnswersToThemeService>()
     .AddScoped<GetStatusBestMarkDatesByStudentIdTaskIdService>()
-    .AddScoped<GetTitlesByTeacherIdService>()
+    .AddScoped<GetTitlesAndIdsByTeacherIdService>()
     .AddScoped<labs_ud.Application.Get.Teacher.GetPhoneService>()
     .AddScoped<labs_ud.Application.Get.Mentor.GetPhoneService>()
     .AddScoped<labs_ud.Application.Get.Student.GetPhoneService>()

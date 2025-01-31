@@ -85,7 +85,7 @@ public class CourseController : ControllerBase
     [HttpGet("titles/{teacherId:guid}")]
     public async Task<ActionResult<Guid>> GetTitlesByTeacherId(
         [FromRoute] Guid teacherId,
-        [FromServices] GetTitlesByTeacherIdService service,
+        [FromServices] GetTitlesAndIdsByTeacherIdService service,
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(teacherId, cancellationToken);
