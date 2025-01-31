@@ -180,6 +180,31 @@ public class MentorController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Изменение пароля ментора по id ментора
+    /// </summary>
+    /// <param name="mentorId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("password/{mentorId:guid}")]
+    public async Task<ActionResult<Guid>> UpdatePassword(
+        [FromRoute] Guid mentorId,
+        [FromBody] PasswordDto dto,
+        [FromServices] UpdatePasswordService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdatePasswordRequest(mentorId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<Guid>> Delete(
         [FromRoute] Guid id,

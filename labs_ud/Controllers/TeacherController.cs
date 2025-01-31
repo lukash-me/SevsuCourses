@@ -161,6 +161,31 @@ public class TeacherController : ControllerBase
         return Ok(result.Value);
     }
     
+    /// <summary>
+    /// Изменение пароля преподавателя по id преподавателя
+    /// </summary>
+    /// <param name="teacherId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("password/{teacherId:guid}")]
+    public async Task<ActionResult<Guid>> UpdatePassword(
+        [FromRoute] Guid teacherId,
+        [FromBody] PasswordDto dto,
+        [FromServices] UpdatePasswordService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdatePasswordRequest(teacherId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<Guid>> Delete(
         [FromRoute] Guid id,

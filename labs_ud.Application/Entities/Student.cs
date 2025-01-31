@@ -41,6 +41,11 @@ public class Student
         Email = email;
     }
     
+    public void UpdatePassword(string password)
+    {
+        Password = password;
+    }
+    
     public void UpdatePhone(string phone)
     {
         Phone = phone;

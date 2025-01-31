@@ -57,6 +57,11 @@ public class Teacher
         Phone = phone;
     }
     
+    public void UpdatePassword(string password)
+    {
+        Password = password;
+    }
+    
     public static Result<Teacher, Error> Create(
         string fio,
         int experience,

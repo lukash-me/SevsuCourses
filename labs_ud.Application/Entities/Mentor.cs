@@ -53,6 +53,11 @@ public class Mentor
         Phone = phone;
     }
     
+    public void UpdatePassword(string password)
+    {
+        Password = password;
+    }
+    
     public static Result<Mentor, Error> Create(
         string fio,
         string phone,
