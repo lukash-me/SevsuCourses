@@ -112,6 +112,25 @@ public class MentorController : ControllerBase
     }
     
     /// <summary>
+    /// Получение id, фио, всех менторов
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("all")]
+    public async Task<ActionResult<Guid>> GetAll(
+        [FromServices] GetAllService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
     /// Изменить основную информацию о менторе по id ментора
     /// </summary>
     /// <param name="mentorId"></param>

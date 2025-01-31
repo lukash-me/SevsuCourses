@@ -40,6 +40,20 @@ public class StudentRepository
         return student;
     }
     
+    public async Task<Result<List<Student>, Error>> GetAll(
+        CancellationToken cancellationToken = default)
+    {
+        var students = await _dbContext.Student
+            .ToListAsync(cancellationToken);
+
+        if (students.Count == 0)
+        {
+            return Errors.Errors.General.NotFound();
+        }
+
+        return students;
+    }
+    
     public async Task<Result<Student, Error>> GetByLoginPassword(
         StudentRequest request, 
         CancellationToken cancellationToken = default)

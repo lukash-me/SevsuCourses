@@ -121,6 +121,25 @@ public class StudentController : ControllerBase
     }
     
     /// <summary>
+    /// Получение id, фио, всех студентов
+    /// </summary>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("all")]
+    public async Task<ActionResult<Guid>> GetAll(
+        [FromServices] GetAllService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
     /// Изменение информации о студенте по id студента
     /// </summary>
     /// <param name="studentId"></param>

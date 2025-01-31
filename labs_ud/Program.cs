@@ -62,6 +62,8 @@ builder.Services
     .AddScoped<labs_ud.Application.Get.Mentor.GetMainInfoService>()
     .AddScoped<labs_ud.Application.Get.Student.GetMainInfoService>()
     .AddScoped<GetMentorFioByIdService>()
+    .AddScoped<labs_ud.Application.Get.Mentor.GetAllService>()
+    .AddScoped<labs_ud.Application.Get.Student.GetAllService>()
     .AddScoped<GetTeacherFioByIdService>()
     .AddScoped<GetTitleAndTeacherByIdService>()
     .AddScoped<GetGroupByIdService>()

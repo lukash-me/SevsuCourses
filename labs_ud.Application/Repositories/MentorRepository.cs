@@ -24,6 +24,20 @@ public class MentorRepository
         return mentor.Id;
     }
     
+    public async Task<Result<List<Mentor>, Error>> GetAll(
+        CancellationToken cancellationToken = default)
+    {
+        var mentors = await _dbContext.Mentor
+            .ToListAsync(cancellationToken);
+        
+        if (mentors.Count == 0)
+        {
+            return Errors.Errors.General.NotFound();
+        }
+        
+        return mentors;
+    } 
+    
     public async Task<Result<Mentor, Error>> GetById(
         MentorId mentorId, 
         CancellationToken cancellationToken = default)
