@@ -51,6 +51,7 @@ builder.Services
     .AddScoped<labs_ud.Application.Update.Teacher.UpdateMainInfoService>()
     .AddScoped<labs_ud.Application.Update.Task.UpdateMainInfoService>()
     .AddScoped<labs_ud.Application.Update.Theme.UpdateMainInfoService>()
+    .AddScoped<labs_ud.Application.Update.Course.UpdateMainInfoService>()
     .AddScoped<UpdateReplyAndMarkService>()
     .AddScoped<GetAnswerService>()
     .AddScoped<GetBestAnswersToThemeService>()

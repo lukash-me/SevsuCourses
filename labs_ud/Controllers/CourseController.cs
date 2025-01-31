@@ -3,6 +3,7 @@ using labs_ud.Application.Delete;
 using labs_ud.Application.Get;
 using labs_ud.Application.Get.Course;
 using labs_ud.Application.IDs;
+using labs_ud.Application.Update.Course;
 using labs_ud.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -89,6 +90,31 @@ public class CourseController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await service.Handle(teacherId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
+    /// Изменить основную информацию о курсе по id курса
+    /// </summary>
+    /// <param name="courseId"></param>
+    /// <param name="dto"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpPut("main-info/{courseId:guid}")]
+    public async Task<ActionResult<Guid>> UpdateMainInfo(
+        [FromRoute] Guid courseId,
+        [FromBody] MainInfoDto dto,
+        [FromServices] UpdateMainInfoService service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new UpdateMainInfoRequest(courseId, dto);
+
+        var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();
