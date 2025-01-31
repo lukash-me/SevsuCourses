@@ -23,5 +23,5 @@ public class GetStudentByLoginPasswordService
 }
 
 public record StudentRequest(
-    string Login,
+    string Email,
     string Password);

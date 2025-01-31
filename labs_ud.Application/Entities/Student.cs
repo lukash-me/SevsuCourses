@@ -13,7 +13,6 @@ public class Student
         bool isAttest,
         string phone,
         string email,
-        string login,
         string password)
     {
         Id = StudentId.NewStudentId();
@@ -23,7 +22,6 @@ public class Student
         IsAttest = isAttest;
         Phone = phone;
         Email = email;
-        Login = login;
         Password = password;
     }
 
@@ -34,7 +32,6 @@ public class Student
     public bool IsAttest { get; set; }
     public string Phone { get; set; }
     public string Email { get; set; }
-    public string Login { get; set; }
     public string Password { get; set; }
 
     public void UpdateMainInfo(string fio, string photo, string email)
@@ -56,7 +53,6 @@ public class Student
         bool isAttest,
         string phone,
         string email,
-        string login,
         string password
     )
     {
@@ -67,7 +63,6 @@ public class Student
             isAttest,
             phone,
             email,
-            login,
             password
         );
         

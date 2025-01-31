@@ -7,5 +7,4 @@ public record CreateStudentRequest(
     bool IsAttest,
     string Phone,
     string Email,
-    string Login,
     string Password);

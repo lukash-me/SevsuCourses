@@ -17,19 +17,11 @@ public class CreateMentorService
     public async Task<Result<Guid, Error>> Handle(CreateMentorRequest request, CancellationToken cancellationToken)
     {
         var fio = request.Fio;
-
         var phone = request.Phone;
-        
         var email  = request.Email;
-
         var education = request.Education;
-        
         var photo = request.Photo;
-        
         var description = request.Description;
-        
-        var login = request.Login;
-        
         var password = request.Password;
 
         var mentorResult = Mentor.Create(
@@ -39,7 +31,6 @@ public class CreateMentorService
             education,
             photo,
             description,
-            login,
             password
             );
 

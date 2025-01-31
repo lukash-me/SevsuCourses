@@ -58,7 +58,7 @@ public class MentorRepository
         CancellationToken cancellationToken = default)
     {
         var mentor = await _dbContext.Mentor
-            .FirstOrDefaultAsync(s => s.Login == request.Login 
+            .FirstOrDefaultAsync(s => s.Email == request.Email 
                                       && s.Password == request.Password, 
                 cancellationToken);
             

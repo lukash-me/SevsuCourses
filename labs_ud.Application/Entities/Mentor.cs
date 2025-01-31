@@ -13,7 +13,6 @@ public class Mentor
         string education,
         string photo,
         string description,
-        string login,
         string password)
     {
         Id = MentorId.NewMentorId();
@@ -23,7 +22,6 @@ public class Mentor
         Education = education;
         Photo = photo;
         Description = description;
-        Login = login;
         Password = password;
     }
 
@@ -34,7 +32,6 @@ public class Mentor
     public string Education { get; set; }
     public string Photo { get; set; }
     public string Description { get; set; }
-    public string Login { get; set; }
     public string Password { get; set; }
 
     public void UpdateMainInfo(
@@ -63,7 +60,6 @@ public class Mentor
         string education,
         string photo,
         string description,
-        string login,
         string password
     )
     {
@@ -74,7 +70,6 @@ public class Mentor
             education,
             photo,
             description,
-            login,
             password
         );
         

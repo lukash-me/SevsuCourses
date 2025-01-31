@@ -8,5 +8,4 @@ public record CreateMentorRequest
     string Education,
     string Photo,
     string Description,
-    string Login,
     string Password);

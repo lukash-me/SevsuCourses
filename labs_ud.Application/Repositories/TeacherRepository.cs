@@ -44,7 +44,7 @@ public class TeacherRepository
         CancellationToken cancellationToken = default)
     {
         var teacher = await _dbContext.Teacher
-            .FirstOrDefaultAsync(s => s.Login == request.Login 
+            .FirstOrDefaultAsync(s => s.Email == request.Email
                                       && s.Password == request.Password, 
                 cancellationToken);
             

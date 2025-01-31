@@ -18,21 +18,12 @@ public class CreateTeacherService
     public async Task<Result<Guid, Error>> Handle(CreateTeacherRequest request, CancellationToken cancellationToken)
     {
         var fio = request.Fio;
-
         var experience = request.Experience;
-        
         var phone  = request.Phone;
-
         var email = request.Email;
-
         var education = request.Education;
-
         var photo = request.Photo;
-
         var description = request.Description;
-
-        var login = request.Login;
-        
         var password = request.Password;
 
         var teacherResult = Teacher.Create(
@@ -43,7 +34,6 @@ public class CreateTeacherService
             education,
             photo,
             description,
-            login,
             password);
 
         if (teacherResult.IsFailure)

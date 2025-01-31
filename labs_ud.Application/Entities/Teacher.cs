@@ -14,7 +14,6 @@ public class Teacher
         string education,
         string photo,
         string description,
-        string login,
         string password)
     {
         Id = TeacherId.NewTeacherId();
@@ -25,7 +24,6 @@ public class Teacher
         Education = education;
         Photo = photo;
         Description = description;
-        Login = login;
         Password = password;
     }
     public Guid Id { get; set; }
@@ -36,7 +34,6 @@ public class Teacher
     public string Education { get; set; }
     public string Photo { get; set; }
     public string Description { get; set; }
-    public string Login { get; set; }
     public string Password { get; set; }
 
     public void UpdateMainInfo(
@@ -68,7 +65,6 @@ public class Teacher
         string education,
         string photo,
         string description,
-        string login,
         string password
     )
     {
@@ -80,7 +76,6 @@ public class Teacher
             education,
             photo,
             description,
-            login,
             password
         );
         

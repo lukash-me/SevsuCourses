@@ -23,5 +23,5 @@ public class GetMentorByLoginPasswordService
 }
 
 public record MentorRequest(
-    string Login,
+    string Email,
     string Password);

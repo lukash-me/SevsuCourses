@@ -18,19 +18,11 @@ public class CreateStudentService
     {
 
         var fio = request.Fio;
-        
         var isExpelled  = request.IsExpelled;
-
         var photo = request.Photo;
-        
         var isAttest = request.IsAttest;
-        
         var phone = request.Phone;
-        
         var email = request.Email;
-
-        var login = request.Login;
-
         var password = request.Password;
 
         var studentResult = Student.Create(
@@ -40,7 +32,6 @@ public class CreateStudentService
             isAttest,
             phone,
             email,
-            login,
             password
         );
 
