@@ -15,6 +15,7 @@ using labs_ud.Application.Get.Teacher;
 using labs_ud.Application.Get.Themes;
 using labs_ud.Application.Repositories;
 using labs_ud.Application.Update.Answer;
+using labs_ud.Application.Update.Group;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +63,7 @@ builder.Services
     .AddScoped<labs_ud.Application.Get.Mentor.GetMainInfoService>()
     .AddScoped<labs_ud.Application.Get.Student.GetMainInfoService>()
     .AddScoped<GetMentorFioByIdService>()
+    .AddScoped<UpdateMentorService>()
     .AddScoped<labs_ud.Application.Get.Mentor.GetAllService>()
     .AddScoped<labs_ud.Application.Get.Student.GetAllService>()
     .AddScoped<GetTeacherFioByIdService>()

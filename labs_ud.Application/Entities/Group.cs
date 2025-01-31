@@ -22,6 +22,11 @@ public class Group
     public DateOnly Start { get; set; }
     public DateOnly End { get; set; }
     public string Status { get; set; }
+
+    public void UpdateMentor(Guid mentorId)
+    {
+        MentorId = mentorId;
+    }
     
     public static Result<Group, Error> Create(
         Guid courseId,
