@@ -122,7 +122,7 @@ export default {
 
       if (id) {
         Cookies.set("id", id, { expires: 1, path: "/" });
-        Cookies.set("role", role.value, { expires: 1, path: "/" });
+        Cookies.set("role", endpoint, { expires: 1, path: "/" });
         router.push({ name: 'coursesPage' });
       } 
       else {

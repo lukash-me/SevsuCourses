@@ -12,9 +12,9 @@
 
     <nav>
       <ul>
-        <li><a href="#">Моя группа</a></li>
+        <li><a href="#">Мои группы</a></li>
         <li>
-          <span class="user">Фамилия Имя</span>
+          <span class="user">{{ userName }}</span>
           <ul>
             <li @click="logout"><span>Выйти</span></li>
           </ul>
@@ -27,18 +27,65 @@
 </template>
 
 <script>
-  
-
+  import { useRouter } from 'vue-router';
   import Cookies from "js-cookie";
+
   export default{
     setup(){
+      const router = useRouter();
+
       function logout() {
         Cookies.remove("id", { path: "/"});
         Cookies.remove("role", { path: "/"});
+        router.push({ name: 'loginPage' });
       }
 
-      return { logout };
-    }
+      return { logout }
+    },
+
+    data() {
+        return {
+          userName: null,
+        };
+    },
+
+    mounted() {
+      this.getUserName()
+    },
+
+    methods: {
+      async getUserName() {
+        const id = Cookies.get("id")
+        const role = Cookies.get("role")
+        try {
+          const response = await fetch(`http://localhost:5036/${role}/fio/${id}`);
+          if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+          }
+          let fio = await response.text();
+          fio = fio.split(" ");
+          fio = fio[0] + " " + fio[1][0] + ". " + fio[2][0] + ".";
+          this.userName = fio;
+        } 
+        catch (error) {
+          console.error('There was a problem with the fetch operation:', error);
+        }
+      }
+    },
+
+    checkLogin() {
+      const userId = Cookies.get("id") || null;
+      const userRole = Cookies.get("role") || null;
+
+      if (userId == null || userRole == null) {
+        this.router.push({ name: 'loginPage' });
+      }
+      else {
+        return
+      } 
+    },
+
+    
   }
 </script>
 
