@@ -36,7 +36,7 @@
         const themes = ref([]);
         const route = useRoute();
         const router = useRouter();
-        const themeImage = '../images/themes_01.jpg';
+        const themeImage = '/images/themes_01.jpg';
 
         const getCourseTitle = async (courseId) => {
             try {

@@ -5,7 +5,7 @@
 
         
             <div class="img-container">
-            <img src="../images/themes_01.jpg" alt="Theme Image" />
+            <img src="/images/themes_01.jpg" alt="Theme Image" />
             </div>
 
             <h2>{{ task.title }}</h2>
