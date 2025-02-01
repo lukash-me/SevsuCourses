@@ -1,5 +1,5 @@
 <template>
-    <head>
+  <head>
     <meta charset="utf-8">
     <title>Все курсы</title>
 
@@ -13,7 +13,12 @@
     <nav>
       <ul>
         <li><a href="#">Моя группа</a></li>
-        <li><span class="user">Фамилия Имя</span></li>
+        <li>
+          <span class="user">Фамилия Имя</span>
+          <ul>
+            <li @click="logout"><span>Выйти</span></li>
+          </ul>
+        </li>
       </ul>
     </nav>
   </header>
@@ -22,7 +27,19 @@
 </template>
 
 <script>
+  
 
+  import Cookies from "js-cookie";
+  export default{
+    setup(){
+      function logout() {
+        Cookies.remove("id", { path: "/"});
+        Cookies.remove("role", { path: "/"});
+      }
+
+      return { logout };
+    }
+  }
 </script>
 
 <style>
@@ -111,6 +128,7 @@
     position: absolute;
     left: 0;
     width: 180px;
+    height: 50px;
     background: #fff;
     display: none;
   }
@@ -120,12 +138,18 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
     margin: 0px;
   }
+
+  header nav ul li ul li span:hover{
+    background-color: #ffdfe2;
+  }
+
+  nav ul li ul li span{
+    color: red;
+  }
   
   nav ul li:hover > ul {
     display: initial;
   }
-
-
 
 .cards-row {
     display: flex;

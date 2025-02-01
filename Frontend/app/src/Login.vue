@@ -6,18 +6,18 @@
         <form @submit.prevent="handleSubmit" novalidate>
 
             <div class="field">
-                <span>Логин</span>
+                <span>Почта</span>
                 <input 
-                id="login"
-                v-model="login"
+                id="email"
+                v-model="email"
                 type="text"
                 class="box"
-                placeholder="Введите логин.."
-                aria-errormessage="login-errors"
+                placeholder="Введите почту.."
+                aria-errormessage="email-errors"
                 title=""
                 required
                 />
-                <span class="field__errors" id="login-errors"></span>
+                <span class="field__errors" id="email-errors"></span>
             </div>
 
             <div class="field">
@@ -62,26 +62,20 @@
 
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Cookies from "js-cookie";
 
 export default {
   name: 'LoginPage',
 
   setup() {
     const router = useRouter();
-    const login = ref('');
+    const email = ref('');
     const password = ref('');
     const role = ref('');
     const roles = ['Студент', 'Ментор', 'Учитель'];
 
-
-    const setCookie = (name, value, days) => {
-      const date = new Date();
-      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-      document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/`;
-    };
-
-    const fetchData = async (endpoint, loginValue, passwordValue) => {
-      const data = { login: loginValue, password: passwordValue };
+    const fetchData = async (endpoint, emailValue, passwordValue) => {
+      const data = { email: emailValue, password: passwordValue };
       const requestOptions = {
         method: 'POST',
         headers: {
@@ -124,11 +118,11 @@ export default {
           return;
       }
 
-      const id = await fetchData(endpoint, login.value, password.value);
+      const id = await fetchData(endpoint, email.value, password.value);
 
       if (id) {
-        setCookie('id', id, 1);
-        setCookie('role', role.value, 1);
+        Cookies.set("id", id, { expires: 1, path: "/" });
+        Cookies.set("role", role.value, { expires: 1, path: "/" });
         router.push({ name: 'coursesPage' });
       } 
       else {
@@ -137,7 +131,7 @@ export default {
     };
 
     return {
-      login,
+      email,
       password,
       role,
       roles,
