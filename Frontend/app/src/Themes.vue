@@ -38,9 +38,9 @@
         const router = useRouter();
         const themeImage = '../images/themes_01.jpg';
 
-        const fetchCourseTitle = async (courseId) => {
+        const getCourseTitle = async (courseId) => {
             try {
-                const response = await fetch(`http://localhost:5036/Course/${courseId}`);
+                const response = await fetch(`http://localhost:5036/Course/title-teacher/${courseId}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch course');
                 }
@@ -51,9 +51,9 @@
             }
         };
 
-        const fetchThemes = async (courseId) => {
+        const getThemes = async (courseId) => {
             try {
-                const response = await fetch(`http://localhost:5036/Theme/course/${courseId}`);
+                const response = await fetch(`http://localhost:5036/Theme/all/${courseId}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch themes');
                 }
@@ -93,8 +93,8 @@
         onMounted(async () => {
             const courseId = route.query.id;
             if (courseId) {
-                await fetchCourseTitle(courseId);
-                await fetchThemes(courseId);
+                await getCourseTitle(courseId);
+                await getThemes(courseId);
             } 
             else {
                 console.error('No course ID provided');

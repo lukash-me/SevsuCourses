@@ -222,6 +222,9 @@
     justify-content: center;
     border-radius: 14px 14px 0px 0px;
     overflow: hidden;
+    display: flex;
+    justify-content: left;
+    position: relative;
 }
 
 .course-card .image img{

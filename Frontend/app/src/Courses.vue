@@ -9,7 +9,9 @@
                 @click="onCourseClick(course.id)"
                 >
                 <div class="image">
-                    <img :src="`../images/${'abstract_02.jpg'}`" alt="Course Image" />
+                    <img :src="courseImage" alt="Course Image"/>
+                    <div class="edit-btn" @click="editCourse($event)">Редактировать</div>
+                    <div class="delete-btn" @click="deleteCourse($event)">Удалить</div>
                 </div>
                 <div class="card-text">
                     <h1>{{ course.title }}</h1>
@@ -31,7 +33,8 @@ export default {
 
     setup() {
         const router = useRouter();
-        return { router };
+        const courseImage = '/images/abstract_02.jpg';
+        return { router, courseImage };
     },
 
     data() {
@@ -59,6 +62,7 @@ export default {
                 console.error('There was a problem with the fetch operation:', error);
             }
         },
+
         showAllCourses(data) {
             let inRow = 0;
             let cardsRow = [];
@@ -75,16 +79,26 @@ export default {
                 this.courseRows.push(cardsRow);
             }
         },
+
         onCourseClick(courseId) {
-            console.log(this.router.getRoutes());
             this.router.push({ 
                 name: 'themesPage',
                 query: {id: courseId } 
             });
-            
         },
+
+        editCourse(event) {
+            event.stopPropagation();
+            console.log('edit');
+        },
+
+        deleteCourse(event) {
+            event.stopPropagation();
+            console.log('delete');
+        },
+
         onAddCourseClick() {
-        console.log("Добавить курс");
+            console.log("Добавить курс");
         },
     },
 };
