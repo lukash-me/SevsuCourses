@@ -3,6 +3,7 @@ import loginPage from './Login.vue';
 import coursesPage from './Courses.vue';
 import themesPage from './Themes.vue';
 import taskPage from './Task.vue';
+import testCreating from './TestCreating.vue';
 
 const routes = [
     {
@@ -24,6 +25,11 @@ const routes = [
         path: '/task-page',
         name: 'taskPage',
         component: taskPage,
+    },
+    {
+        path: '/test-creating',
+        name: 'testCreating',
+        component: testCreating,
     },
 ];
 
