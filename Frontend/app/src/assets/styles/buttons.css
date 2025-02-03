@@ -9,7 +9,7 @@
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius);
     color: var(--font-edit-color);
-    font-size: var(--font-edit-size);
+    font-size: var(--font-btns-size);
     font-weight: var(--font-btns-weight);
     display: flex;
     align-items: center;
@@ -31,7 +31,7 @@
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius);
     color: var(--font-delete-color);
-    font-size: var(--font-delete-size);
+    font-size: var(--font-btns-size);
     font-weight: var(--font-btns-weight);
     display: flex;
     align-items: center;
@@ -41,5 +41,39 @@
 }
 
 .delete-btn:hover {
-    background-color: var(--secondary-delete-color);
+    background-color: #B9B9B9;
+}
+
+.cancel-btn {
+    width: 160px;
+    height: 40px;
+    border: 2px solid #1b2a40d0;
+    border-radius: 20px;
+    background-color: #fff;
+    font-size: 16px;
+    color: var(--primary-font-color);
+    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    transition: .3s;
+}
+
+.cancel-btn:hover {
+    background-color: var(--secondary-edit-color);
+}
+
+.save-btn {
+    width: 160px;
+    height: 40px;
+    border: 2px solid #1b2a40d0;
+    border-radius: 20px;
+    background-color: #E9FFE8;
+    font-size: 16px;
+    color: var(--primary-font-color);
+    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
+    transition: .3s;
+    cursor: pointer;
+}
+
+.save-btn:hover {
+    background-color: #8EE789;
 }

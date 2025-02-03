@@ -1,13 +1,15 @@
 :root {
+
+    --primary-font-color: #1B2A40;
+    
     --primary-edit-color: #FFFFFF;
     --secondary-edit-color: #D8D8D8;
     --font-edit-color: #1B2A40;
-    --font-edit-size: 14px;
+    --font-btns-size: 14px;
 
     --primary-delete-color: #FA9797;
     --secondary-delete-color: #F24242;
     --font-delete-color: #1B2A40;
-    --font-delete-size: 14px;
 
     --border-color: #1B2A40;
     --border-radius: 10px;
@@ -16,4 +18,5 @@
 
     --course-edit-form-bckg-clr: #E9F2FF;
     --course-edit-form-border-radius: 20px;
+    --font-forms-weight: 600;
 }
