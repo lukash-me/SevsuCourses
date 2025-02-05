@@ -1,5 +1,8 @@
 <template>
     <div class="container">
+        <div class="course-add-card">
+            <div class="add-button" @click="toCreateCourse">Добавить курс</div>
+        </div>
         <div v-for="(cardsRow, index) in courseRows" :key="index" class="cards-row">
             <div
                 v-for="(course) in cardsRow"
@@ -17,9 +20,6 @@
                     <h1>{{ course.title }}</h1>
                     <span>{{ course.description }}</span>
                 </div>
-            </div>
-            <div class="course-add-card">
-                <div class="add-button" @click="createCourse">Добавить курс</div>
             </div>
         </div>
     </div>
@@ -74,7 +74,7 @@
 
             <div class="btns-container">
                 <button class="cancel-btn" @click="closeModal">Отменить</button>
-                <button class="save-btn" @click="updateCourse">Сохранить</button>
+                <button class="save-btn" @click="saveCourse">Сохранить</button>
             </div>
         </form>
     </div>
@@ -83,6 +83,7 @@
 <script>
 import { useRouter } from 'vue-router';
 import { reactive, ref } from 'vue';
+import Cookies from "js-cookie";
 
 export default {
     name: 'CoursesPage',
@@ -95,7 +96,8 @@ export default {
             courseId: null,
             image: null,
             title: null,
-            description: null
+            description: null,
+            method: null
         });
 
         return { router, courseImage, isModalOpen, form };
@@ -164,9 +166,32 @@ export default {
             }
         },
 
+        async createCourse(request) {
+            try {
+                const response = await fetch(`http://localhost:5036/Course`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(request),
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const result = await response.json();
+                console.log("Курс успешно создан:", result);
+
+                return result;
+            } 
+            catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        },
+
         async showAllCourses() {
             const data = await this.getAllCourses();
-            let inRow = 0;
+            let inRow = 1;
             let cardsRow = [];
             
             data.forEach((course) => {
@@ -199,27 +224,45 @@ export default {
             this.form.image = data.photo;
             this.form.title = data.title;
             this.form.description = data.description;
+            this.form.method = "PUT";
 
             this.openModal();
         },
 
-        async updateCourse() {
+        async saveCourse() {
+            
+            if (this.form.method === "PUT") {
 
-            const request = {
-                photo: this.form.image,
-                title: this.form.title,
-                description: this.form.description
+                const request = {
+                    photo: this.form.image,
+                    title: this.form.title,
+                    description: this.form.description
+                }
+
+                await this.updateCourseInfo(this.form.courseId, request);
+
+                this.closeModal();
+
+                await this.refreshCard();
             }
-            
-            console.log(request);
-            console.log(this.form.courseId);
-            
-            await this.updateCourseInfo(this.form.courseId, request);
-            this.closeModal();
+            else {
 
-            await this.refreshCard();
+                const request = {
+                    teacherId: Cookies.get("id"),
+                    photo: this.form.image,
+                    title: this.form.title,
+                    description: this.form.description
+                }
+
+                this.form.courseId = await this.createCourse(request);
+
+                this.closeModal();
+
+                this.addCard();
+            }
         },
 
+        // Обновление карточки на странице
         async refreshCard() {
             const data = await this.getCourseInfo(this.form.courseId);
             
@@ -236,12 +279,34 @@ export default {
              );
         },
 
+        // Отображение новой карточки на странице
+        async addCard() {
+            const data = await this.getCourseInfo(this.form.courseId);
+            
+            const createdCourse = {
+                "id": this.form.courseId,
+                "title": data.title,
+                "image": data.photo,
+                "description": data.description
+            }
+
+            console.log(this.courseRows);
+            console.log(this.courseRows[this.courseRows.length - 1]);
+
+            if (this.courseRows[this.courseRows.length - 1].length != 4) {                
+                this.courseRows[this.courseRows.length - 1].push(createdCourse);
+            }
+            else {
+                this.courseRows.push([createdCourse]);
+            }
+        },
+
         deleteCourse(event) {
             event.stopPropagation();
             console.log('delete');
         },
 
-        createCourse() {
+        toCreateCourse() {
 
             this.form.courseId = null;
             this.form.image = null;
@@ -258,8 +323,6 @@ export default {
         closeModal() {
             this.isModalOpen = false;
         }
-
-
     },
 };
 
@@ -269,9 +332,12 @@ export default {
 <style scoped>
 
 .container {
+    display: flex;
+    flex-wrap: wrap;
     margin-top: 10rem;
     width: 90%;
     justify-self: center;
+    gap: 10px;
 }
 
 .btns-container {

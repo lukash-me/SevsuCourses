@@ -200,6 +200,7 @@
 
 .cards-row {
     display: flex;
+    gap: 10px;
 }
 
 .course-card {
@@ -210,7 +211,6 @@
     flex-direction: column;
     align-items: center;
     border-radius: 14px;
-    margin-right: 1rem;
     cursor: pointer;
 }
 
@@ -253,11 +253,11 @@
     width: 40rem;
     background-color: #fff;
     display: flex;
+    flex: 0 1 auto;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     border-radius: 14px;
-    margin-right: 1rem;
 }
 
 .course-add-card .add-button {
