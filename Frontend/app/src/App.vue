@@ -269,4 +269,5 @@
     align-items: center;
     border-radius: 14px;
 }
+
 </style>
