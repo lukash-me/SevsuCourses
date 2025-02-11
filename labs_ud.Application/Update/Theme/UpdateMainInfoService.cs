@@ -27,7 +27,6 @@ public class UpdateMainInfoService
         
         themeResult.Value.UpdateMainInfo(
             request.Dto.Title,
-            request.Dto.Description,
             request.Dto.Text,
             request.Dto.Photo
         );
@@ -45,7 +44,6 @@ public record UpdateMainInfoRequest(
     
 public record MainInfoDto(
     string Title,
-    string Description,
     string Text,
     string Photo
 );

@@ -2,7 +2,6 @@ namespace labs_ud.Application.Create;
 
 public record CreateThemeDto(
     string Title,
-    string? Description,
     string? Text,
     string? Photo
 );

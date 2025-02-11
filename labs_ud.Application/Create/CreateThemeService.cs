@@ -18,7 +18,6 @@ public class CreateThemeService
     {
         var courseId = request.CourseId;
         var title = request.Dto.Title;
-        var description  = request.Dto.Description;
         var text = request.Dto.Text;
         var photo = request.Dto.Photo;
         var number = request.Number;
@@ -26,7 +25,6 @@ public class CreateThemeService
         var themeResult = Theme.Create(
             courseId,
             title,
-            description,
             text,
             photo,
             number);

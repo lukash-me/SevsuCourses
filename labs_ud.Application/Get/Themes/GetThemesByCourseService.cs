@@ -24,12 +24,11 @@ public class GetThemesByCourseService
         {
             var id = theme.Id;
             var title = theme.Title;
-            var description = theme.Description;
             var text = theme.Text;
             var photo = theme.Photo;
             var number = theme.Number;
 
-            var themeResponse = new ThemeResponse(id, title, description, text, photo, number);
+            var themeResponse = new ThemeResponse(id, title, text, photo, number);
             response.Add(themeResponse);
         }
 

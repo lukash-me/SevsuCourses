@@ -23,11 +23,10 @@ public class GetMainInfoService
         var theme = themeResult.Value;
         
         var title = theme.Title;
-        var description = theme.Description;
         var text = theme.Text;
         var photo = theme.Photo;
         
-        var response = new MainInfoResponse(title, description, text, photo);
+        var response = new MainInfoResponse(title, text, photo);
 
         return response;
     }
@@ -35,7 +34,6 @@ public class GetMainInfoService
 
 public record MainInfoResponse(
     string Title,
-    string? Description,
     string? Text,
     string? Photo
     );
