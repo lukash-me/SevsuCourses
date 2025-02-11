@@ -2,7 +2,7 @@
     
     <div class="testdiv">test</div>
 
-
+    
     
 
 
@@ -40,6 +40,13 @@ export default {
         width: 600px;
         height: 600px;
         background-color: red;
+    }
+
+    .btns-container {
+        
+        margin-top: 30px;
+        display: flex;
+        gap: 35px;
     }
 
     

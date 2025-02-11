@@ -253,7 +253,6 @@
     width: 40rem;
     background-color: #fff;
     display: flex;
-    flex: 0 1 auto;
     flex-direction: column;
     justify-content: center;
     align-items: center;

@@ -14,7 +14,7 @@
                 <div class="image">
                     <img :src="courseImage" alt="Course Image"/>
                     <div class="edit-btn" @click="editCourse($event, course.id)">Редактировать</div>
-                    <div class="delete-btn" @click="deleteCourse($event, course.id)">Удалить</div>
+                    <div class="delete-btn" @click="toDeleteCourse($event, course.id)">Удалить</div>
                 </div>
                 <div class="card-text">
                     <h1>{{ course.title }}</h1>
@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <div v-if="isModalOpen" class="overlay">
+    <div v-if="isModalFormOpen" class="overlay">
         <form class="course-edit-form" @submit.prevent="handleSubmit" novalidate>
             
             <h1>Курс</h1>
@@ -73,11 +73,26 @@
             </div>
 
             <div class="btns-container">
-                <button class="cancel-btn" @click="closeModal">Отменить</button>
+                <button class="cancel-btn" @click="closeFormModal">Отменить</button>
                 <button class="save-btn" @click="saveCourse">Сохранить</button>
             </div>
         </form>
     </div>
+
+    <div v-if="isModalDeleteInfoOpen" class="overlay">
+        <div class="delete-confirm">
+            <div class="text-modal">
+                <span>Вы <b>уверены</b>, что хотите</span>
+                <span><span class="red-font">удалить</span> выбранный курс?</span>
+            </div>
+            <div class="btns-container">
+                <button class="cancel-btn" @click="closeDeleteModal">Вернуться</button>
+                <button class="delete-btn-big" @click="removeCourse">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    
 </template>
 
 <script>
@@ -91,7 +106,8 @@ export default {
     setup() {
         const router = useRouter();
         const courseImage = '/images/abstract_02.jpg';
-        let isModalOpen = ref(false); 
+        let isModalFormOpen = ref(false);
+        let isModalDeleteInfoOpen = ref(false); 
         const form = reactive({
             courseId: null,
             image: null,
@@ -100,7 +116,7 @@ export default {
             method: null
         });
 
-        return { router, courseImage, isModalOpen, form };
+        return { router, courseImage, isModalFormOpen, isModalDeleteInfoOpen, form };
     },
 
     data() {
@@ -189,6 +205,25 @@ export default {
             }
         },
 
+        async deleteCourse(courseId) {
+            try {
+                const response = await fetch(`http://localhost:5036/Course/${courseId}`, {
+                    method: "DELETE"
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const result = await response.json();
+                console.log("Курс успешно удален:", result);
+
+                return result;
+            } 
+            catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        },
+
         async showAllCourses() {
             const data = await this.getAllCourses();
             let inRow = 1;
@@ -226,7 +261,7 @@ export default {
             this.form.description = data.description;
             this.form.method = "PUT";
 
-            this.openModal();
+            this.openFormModal();
         },
 
         async saveCourse() {
@@ -241,7 +276,7 @@ export default {
 
                 await this.updateCourseInfo(this.form.courseId, request);
 
-                this.closeModal();
+                this.closeFormModal();
 
                 await this.refreshCard();
             }
@@ -256,7 +291,7 @@ export default {
 
                 this.form.courseId = await this.createCourse(request);
 
-                this.closeModal();
+                this.closeFormModal();
 
                 this.addCard();
             }
@@ -290,20 +325,12 @@ export default {
                 "description": data.description
             }
 
-            console.log(this.courseRows);
-            console.log(this.courseRows[this.courseRows.length - 1]);
-
             if (this.courseRows[this.courseRows.length - 1].length != 4) {                
                 this.courseRows[this.courseRows.length - 1].push(createdCourse);
             }
             else {
                 this.courseRows.push([createdCourse]);
             }
-        },
-
-        deleteCourse(event) {
-            event.stopPropagation();
-            console.log('delete');
         },
 
         toCreateCourse() {
@@ -313,15 +340,45 @@ export default {
             this.form.title = null;
             this.form.description = null;
 
-            this.openModal();
+            this.openFormModal();
         },
 
-        openModal() {
-            this.isModalOpen = true;
+        toDeleteCourse(event, id) {
+            event.stopPropagation();
+            this.openDeleteModal();
+
+            this.form.courseId = id;
         },
 
-        closeModal() {
-            this.isModalOpen = false;
+        async removeCourse() {
+            console.log(this.form.courseId)
+            const response = await this.deleteCourse(this.form.courseId);
+            console.log(this.form.courseId)
+            console.log(response)
+
+            this.closeDeleteModal();
+
+            this.courseRows = this.courseRows.map(row =>
+                row.filter(course => course.id !== this.form.courseId)
+            );
+
+            
+        },
+
+        openFormModal() {
+            this.isModalFormOpen = true;
+        },
+
+        closeFormModal() {
+            this.isModalFormOpen = false;
+        },
+
+        openDeleteModal() {
+            this.isModalDeleteInfoOpen = true;
+        },
+
+        closeDeleteModal() {
+            this.isModalDeleteInfoOpen = false;
         }
     },
 };
