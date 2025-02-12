@@ -28,6 +28,7 @@
         >
           Task №{{ index + 1 }} - {{ task.title }}
         </div>
+        <button class="add-task-btn" @click="toCreateTask(theme.id)">Добавить задачу</button>
       </div>
     </div>
 
@@ -101,6 +102,100 @@
 
     <button class="add-theme-btn" @click="toCreateTheme">Добавить тему</button>
 
+    <div v-if="isModalFormTaskOpen" class="overlay">
+        <form class="task-edit-form" @submit.prevent="handleSubmit" novalidate>
+            
+            <h1>Задача</h1>
+            
+
+            <div class="field">
+                <span>Изображение</span>
+                <input 
+                id="image"
+                v-model="formTask.image"
+                type="text"
+                class="box"
+                placeholder="Укажите название изображения.."
+                aria-errormessage="image-errors"
+                title=""
+                />
+                <span class="field__errors" id="image-errors"></span>
+            </div>
+
+            <div class="field">
+                <span>Название*</span>
+                <input
+                id="title"
+                v-model="formTask.title"
+                type="text" 
+                class="box"
+                placeholder="Введите название.."
+                aria-errormessage="title-errors"
+                title=""
+                required
+                />
+                <span class="field__errors" id="title-errors"></span>
+            </div>
+
+            <div class="field">
+                <span>Условие задачи</span>
+                <textarea
+                id="description"
+                v-model="formTask.description"
+                type="text" 
+                class="box"
+                placeholder="Текст задачи.."
+                aria-errormessage="description-errors"
+                title=""></textarea>
+                <span class="field__errors" id="description-errors"></span>
+            </div>
+
+            <div class="field">
+                <span>Количество попыток</span>
+                <input
+                id="attemps"
+                v-model="formTask.attemps"
+                type="text" 
+                class="box"
+                placeholder="Введите число.."
+                aria-errormessage="attemps-errors"
+                title="">
+                <span class="field__errors" id="attemps-errors"></span>
+            </div>
+
+            <div class="field">
+                <span>Минимальная оценка для выполнения</span>
+                <input
+                id="minMark"
+                v-model="formTask.minMark"
+                type="text" 
+                class="box"
+                placeholder="Введите число.."
+                aria-errormessage="minMark-errors"
+                title="">
+                <span class="field__errors" id="minMark-errors"></span>
+            </div>
+
+            <div class="field">
+                <span>Максимальная оценка</span>
+                <input
+                id="maxMark"
+                v-model="formTask.maxMark"
+                type="text" 
+                class="box"
+                placeholder="Введите число.."
+                aria-errormessage="maxMark-errors"
+                title="">
+                <span class="field__errors" id="maxMark-errors"></span>
+            </div>
+
+            <div class="btns-container">
+                <button class="cancel-btn" @click="closeFormTask">Отменить</button>
+                <button class="save-btn" @click="saveTask">Сохранить</button>
+            </div>
+        </form>
+    </div>
+
 </template>
 
 <script>
@@ -117,15 +212,26 @@
             const themeImage = '/images/themes_01.jpg';
             let isModalFormOpen = ref(false);
             let isModalDeleteInfoOpen = ref(false);
+            let isModalFormTaskOpen = ref(false);
             const form = reactive({
                 themeId: null,
                 image: null,
                 title: null,
                 description: null,
                 method: null
+            });
+            const formTask = reactive({
+                themeId: null,
+                taskId: null,
+                image: null,
+                title: null,
+                description: null,
+                attemps: null,
+                minMark: null,
+                maxMark: null
             })
 
-            return { courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, form};
+            return { courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, form, formTask};
         },
 
         async mounted() {
@@ -236,6 +342,29 @@
                 }
             },
 
+            async createTask(request) {
+                try {
+                    const response = await fetch(`http://localhost:5036/Task`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(request),
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+
+                    const result = await response.json();
+                    console.log("Задача успешно создана:", result);
+
+                    return result;
+                } 
+                catch (error) {
+                    console.error('There was a problem with the fetch operation:', error);
+                }
+            },
+
             async updateTheme(themeId, request) {
                 try {
                     const response = await fetch(`http://localhost:5036/Theme/main-info/${themeId}`, {
@@ -316,6 +445,18 @@
                 this.isModalFormOpen = false;
             },
 
+            closeFormTask() {
+                this.formTask.themeId = null;
+                this.isModalFormTaskOpen = false;
+
+                
+                this.formTask.title = null;
+                this.formTask.description = null;
+                this.formTask.attemps = null;
+                this.formTask.minMark = null;
+                this.formTask.maxMark = null;
+            },
+
             async toEditTheme(themeId) {
                 this.form.themeId = themeId;
                 this.isModalFormOpen = true;
@@ -343,7 +484,32 @@
                 this.themes = this.themes.filter(theme => theme.id !== this.form.themeId);
 
                 this.closeDeleteModal()
-            }
+            },
+
+            toCreateTask(themeId) {
+                this.isModalFormTaskOpen = true;
+                this.formTask.themeId = themeId;
+            },
+
+            async saveTask(){
+
+                const request = {
+                    themeId: this.formTask.themeId,
+                    title: this.formTask.title,
+                    condition: this.formTask.description,
+                    attempsAmount: this.formTask.attemps,
+                    minMark: this.formTask.minMark,
+                    maxMark: this.formTask.maxMark
+                }
+
+                await this.createTask(request);
+                
+                this.themes = this.themes.map(theme =>
+                    theme.id === this.formTask.themeId ? { ...theme, tasks: [...theme.tasks, request] } : theme
+                );
+
+                this.closeFormTask();
+            },
         }
     };
 
