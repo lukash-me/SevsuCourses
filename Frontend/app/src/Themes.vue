@@ -26,7 +26,8 @@
           class="task"
           @click="goToTask(task.id)"
         >
-          Task №{{ index + 1 }} - {{ task.title }}
+          <span>Задача №{{ index + 1 }} - {{ task.title }}</span>
+          <button class="delete-btn" @click="toDeleteTask($event, task.id)">Удалить</button>
         </div>
         <button class="add-task-btn" @click="toCreateTask(theme.id)">Добавить задачу</button>
       </div>
@@ -96,6 +97,19 @@
             <div class="btns-container">
                 <button class="cancel-btn" @click="closeDeleteModal">Вернуться</button>
                 <button class="delete-btn-big" @click="removeTheme">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="isModalDeleteTaskInfoOpen" class="overlay">
+        <div class="delete-confirm">
+            <div class="text-modal">
+                <span>Вы <b>уверены</b>, что хотите</span>
+                <span><span class="red-font">удалить</span> выбранную задачу?</span>
+            </div>
+            <div class="btns-container">
+                <button class="cancel-btn" @click="closeDeleteTaskModal">Вернуться</button>
+                <button class="delete-btn-big" @click="removeTask">Удалить</button>
             </div>
         </div>
     </div>
@@ -213,6 +227,7 @@
             let isModalFormOpen = ref(false);
             let isModalDeleteInfoOpen = ref(false);
             let isModalFormTaskOpen = ref(false);
+            let isModalDeleteTaskInfoOpen = ref(false);
             const form = reactive({
                 themeId: null,
                 image: null,
@@ -231,7 +246,7 @@
                 maxMark: null
             })
 
-            return { courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, form, formTask};
+            return { courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, isModalDeleteTaskInfoOpen, form, formTask};
         },
 
         async mounted() {
@@ -387,23 +402,42 @@
             },
 
             async deleteTheme(themeId) {
-            try {
-                const response = await fetch(`http://localhost:5036/Theme/${themeId}`, {
-                    method: "DELETE"
-                });
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
+                try {
+                    const response = await fetch(`http://localhost:5036/Theme/${themeId}`, {
+                        method: "DELETE"
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+
+                    const result = await response.json();
+                    console.log("Тема успешно удалена:", result);
+
+                    return result;
+                } 
+                catch (error) {
+                    console.error('There was a problem with the fetch operation:', error);
                 }
+            },
 
-                const result = await response.json();
-                console.log("Тема успешно удалена:", result);
+            async deleteTask(taskId) {
+                try {
+                    const response = await fetch(`http://localhost:5036/Task/${taskId}`, {
+                        method: "DELETE"
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
 
-                return result;
-            } 
-            catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
-        },
+                    const result = await response.json();
+                    console.log("Задача успешно удалена:", result);
+
+                    return result;
+                } 
+                catch (error) {
+                    console.error('There was a problem with the fetch operation:', error);
+                }
+            },
 
             async saveTheme(){
 
@@ -449,7 +483,6 @@
                 this.formTask.themeId = null;
                 this.isModalFormTaskOpen = false;
 
-                
                 this.formTask.title = null;
                 this.formTask.description = null;
                 this.formTask.attemps = null;
@@ -510,6 +543,28 @@
 
                 this.closeFormTask();
             },
+
+            toDeleteTask(event, taskId) {
+                event.stopPropagation(event);
+                this.formTask.taskId = taskId;
+                this.isModalDeleteTaskInfoOpen = true;
+            },
+
+            async removeTask() {
+                await this.deleteTask(this.formTask.taskId);
+
+                this.themes = this.themes.map(theme => ({
+                    ...theme,
+                    tasks: theme.tasks.filter(task => task.id !== this.formTask.taskId)
+                }));
+
+                this.closeDeleteTaskModal()
+            },
+
+            closeDeleteTaskModal(){
+                this.formTask.taskId = null;
+                this.isModalDeleteTaskInfoOpen = false;
+            }
         }
     };
 
@@ -548,7 +603,6 @@
         height: 900px;
         border: 2px solid white;
         display: flex;
-        justify-content: center;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
@@ -567,11 +621,40 @@
         color: #fff;
     }
 
-    .container .task{
-        margin-top: 2rem;
-        font-size: 2rem;
+    .container .tasks{
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .container .tasks .task{
+        margin-top: 10px;
+        margin-left: 20%;
+        width: auto;
         color: #fff;
         cursor: pointer;
+
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+
+        align-items: center;
+        justify-content: flex-start;
+
+        gap: 10px;
+    }
+
+    .container .task .delete-btn{
+        margin-top: 0;
+        margin-left: 20%;
+        position: absolute;
+    }
+
+    .container .task span{
+        font-size: 20px;
     }
 
     .container .img-container {
@@ -602,6 +685,10 @@
 
     .theme-btns-container {
         margin-left: 30px;
+    }
+
+    .add-task-btn {
+        margin-left: 30%;
     }
 
 </style>
