@@ -11,6 +11,7 @@
     color: var(--font-edit-color);
     font-size: var(--font-btns-size);
     font-weight: var(--font-btns-weight);
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -33,6 +34,7 @@
     color: var(--font-delete-color);
     font-size: var(--font-btns-size);
     font-weight: var(--font-btns-weight);
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;

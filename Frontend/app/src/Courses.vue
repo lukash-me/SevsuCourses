@@ -311,7 +311,7 @@ export default {
             this.courseRows = this.courseRows.map(row =>
                 row.map(course => 
                     (course.id === this.form.courseId ? { ...course, ...updatedCourse } : course))
-             );
+            );
         },
 
         // Отображение новой карточки на странице

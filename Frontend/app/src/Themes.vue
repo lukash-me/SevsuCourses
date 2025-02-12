@@ -5,11 +5,19 @@
     </div>
 
     <div v-for="theme in themes" :key="theme.id" class="container">
-      <h2>{{ theme.title }}</h2>
+        <div class="theme-title">
+            <h2>{{ theme.title }}</h2>
+            <div class="theme-btns-container">
+                <div class="edit-btn" @click="toEditTheme(theme.id)">Редактировать</div>
+                <div class="delete-btn" @click="toDeleteTheme(theme.id)">Удалить</div>
+            </div>
+        </div>
+      
       <div class="img-container">
         <img :src="themeImage" alt="Theme Image">
       </div>
-      <p class="theme-text">{{ theme.text }}</p>
+        <p class="theme-text">{{ theme.text }}</p>
+      
 
       <div class="tasks">
         <div 
@@ -78,6 +86,19 @@
         </form>
     </div>
 
+    <div v-if="isModalDeleteInfoOpen" class="overlay">
+        <div class="delete-confirm">
+            <div class="text-modal">
+                <span>Вы <b>уверены</b>, что хотите</span>
+                <span><span class="red-font">удалить</span> выбранную тему?</span>
+            </div>
+            <div class="btns-container">
+                <button class="cancel-btn" @click="closeDeleteModal">Вернуться</button>
+                <button class="delete-btn-big" @click="removeTheme">Удалить</button>
+            </div>
+        </div>
+    </div>
+
     <button class="add-theme-btn" @click="toCreateTheme">Добавить тему</button>
 
 </template>
@@ -95,6 +116,7 @@
             const router = useRouter();
             const themeImage = '/images/themes_01.jpg';
             let isModalFormOpen = ref(false);
+            let isModalDeleteInfoOpen = ref(false);
             const form = reactive({
                 themeId: null,
                 image: null,
@@ -103,7 +125,7 @@
                 method: null
             })
 
-            return { courseTitle, themes, route, router, themeImage, isModalFormOpen, form};
+            return { courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, form};
         },
 
         async mounted() {
@@ -148,6 +170,21 @@
                         })
                     );
                     this.themes = enrichedThemes.sort((a, b) => a.number - b.number);
+                } 
+                catch (error) {
+                    console.error('Error fetching themes:', error);
+                }
+            },
+
+            async getTheme(themeId) {
+                try {
+                    const response = await fetch(`http://localhost:5036/Theme/${themeId}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch themes');
+                    }
+                    const data = await response.json();
+
+                    return data
                 } 
                 catch (error) {
                     console.error('Error fetching themes:', error);
@@ -199,6 +236,46 @@
                 }
             },
 
+            async updateTheme(themeId, request) {
+                try {
+                    const response = await fetch(`http://localhost:5036/Theme/main-info/${themeId}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(request),
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+
+                    const result = await response.json();
+                    console.log("Тема успешно обновлена:", result);
+                } 
+                catch (error) {
+                    console.error('There was a problem with the fetch operation:', error);
+                }
+            },
+
+            async deleteTheme(themeId) {
+            try {
+                const response = await fetch(`http://localhost:5036/Theme/${themeId}`, {
+                    method: "DELETE"
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const result = await response.json();
+                console.log("Тема успешно удалена:", result);
+
+                return result;
+            } 
+            catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        },
+
             async saveTheme(){
 
                 const request = {
@@ -207,15 +284,65 @@
                     text: this.form.description
                 }
 
-                await this.createTheme(request)
+                if (this.form.themeId == null) {
+                    await this.createTheme(request)
+                    this.themes.push(request);
+                }
+                else {
+                    await this.updateTheme(this.form.themeId, request)
+                    await this.refresh(request);
+                }
 
-                this.themes.push(request);
-                
                 this.closeForm();
             },
 
+            async refresh() {
+
+                const data = await this.getTheme(this.form.themeId)
+
+                const updatedTheme = {
+                    "id": this.form.themeId,
+                    "title": data.title,
+                    "image": data.photo,
+                    "text": data.text
+                } 
+
+                this.themes = this.themes.map(theme =>
+                    theme.id === this.form.themeId ? { ...theme, ...updatedTheme } : theme);
+            },
+
             closeForm() {
-                this.isModalFormOpen = false
+                this.form.themeId = null;
+                this.isModalFormOpen = false;
+            },
+
+            async toEditTheme(themeId) {
+                this.form.themeId = themeId;
+                this.isModalFormOpen = true;
+
+                const theme = await this.getTheme(this.form.themeId);
+
+                this.form.title = theme.title;
+                this.form.image = theme.photo;
+                this.form.description = theme.text;
+            },
+
+            toDeleteTheme(themeId) {
+                this.form.themeId = themeId;
+                this.isModalDeleteInfoOpen = true;
+            },
+
+            closeDeleteModal() {
+                this.form.themeId = null;
+                this.isModalDeleteInfoOpen = false;
+            },
+
+            async removeTheme() {
+                await this.deleteTheme(this.form.themeId);
+
+                this.themes = this.themes.filter(theme => theme.id !== this.form.themeId);
+
+                this.closeDeleteModal()
             }
         }
     };
@@ -299,4 +426,16 @@
         display: flex;
         gap: 35px;
     }
+
+    .theme-title {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .theme-btns-container {
+        margin-left: 30px;
+    }
+
 </style>
