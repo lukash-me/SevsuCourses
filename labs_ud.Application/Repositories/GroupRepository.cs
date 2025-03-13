@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using labs_ud.Application.Entities;
 using labs_ud.Application.Errors;
+using labs_ud.Application.Get.Group;
 using labs_ud.Application.IDs;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,6 +38,23 @@ public class GroupRepository
         
         return group;
     }
+    
+    public async Task<Result<List<Group>, Error>> GetByMentorIdAndCourseId(
+        GroupsRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _dbContext.Group
+            .Where(g => g.MentorId == request.MentorId && g.CourseId == request.CourseId)
+            .ToListAsync(cancellationToken);
+        
+        if (result.Count == 0)
+        {
+            return Errors.Errors.General.NotFound(request.MentorId.Value);
+        }
+        
+        return result;
+    }
+    
     
     public Guid Delete(Group group, CancellationToken cancellationToken = default)
     {

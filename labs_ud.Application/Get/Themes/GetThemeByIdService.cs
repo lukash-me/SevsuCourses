@@ -22,12 +22,13 @@ public class GetThemeByIdService
         
         
         var id = theme.Id;
+        var courseId = theme.CourseId;
         var title = theme.Title;
         var text = theme.Text;
         var photo = theme.Photo;
         var number = theme.Number;
 
-        var response = new ThemeResponse(id, title, text, photo, number);
+        var response = new ThemeResponse(id, courseId, title, text, photo, number);
 
         return response;
     }

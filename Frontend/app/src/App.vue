@@ -29,48 +29,59 @@
 <script>
   import { useRouter } from 'vue-router';
   import Cookies from "js-cookie";
+  import { ref } from "vue";
 
   export default{
+
+
     setup(){
       const router = useRouter();
+      let userName = ref();
 
       function logout() {
         Cookies.remove("id", { path: "/"});
         Cookies.remove("role", { path: "/"});
+        userName.value = "";
         router.push({ name: 'loginPage' });
       }
 
-      return { logout }
+      return { logout, userName }
     },
 
-    data() {
-        return {
-          userName: null,
-        };
-    },
-
-    mounted() {
-      this.getUserName()
+    async mounted() {
+      await this.setUserName();
     },
 
     methods: {
-      async getUserName() {
-        const id = Cookies.get("id")
-        const role = Cookies.get("role")
-        try {
-          const response = await fetch(`http://localhost:5036/${role}/fio/${id}`);
-          if (!response.ok) {
-              throw new Error('Network response was not ok ' + response.statusText);
-          }
-          let fio = await response.text();
-          fio = fio.split(" ");
-          fio = fio[0] + " " + fio[1][0] + ". " + fio[2][0] + ".";
-          this.userName = fio;
-        } 
-        catch (error) {
-          console.error('There was a problem with the fetch operation:', error);
-        }
+      async setUserName() {
+        if (Cookies.get("id")) {
+        this.userName = await this.getUserName();
       }
+    },
+
+    async getUserName() {
+
+      const id = Cookies.get("id");
+      const role = Cookies.get("role");
+
+      try {
+        const response = await fetch(`http://localhost:5036/${role}/main-info/${id}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+
+        const data = await response.json();
+        let fio = await data.fio;
+        
+        fio = fio.split(" ");
+        fio = fio[0] + " " + fio[1][0] + ". " + fio[2][0] + ".";
+
+        return fio;
+      } 
+      catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    }
     },
 
     checkLogin() {

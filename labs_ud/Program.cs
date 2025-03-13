@@ -43,6 +43,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
+    .AddScoped<labs_ud.Application.Get.Group.GetGroupsByMentorIdAndCourseId>()
     .AddScoped<labs_ud.Application.Update.Teacher.UpdatePhoneService>()
     .AddScoped<labs_ud.Application.Update.Mentor.UpdatePhoneService>()
     .AddScoped<labs_ud.Application.Update.Student.UpdatePhoneService>()

@@ -1,5 +1,24 @@
 @import './variables.css';
 
+.btn {
+    margin-top: 0px;
+    width: 300px;
+    height: 75px;
+    background-color: var(--primary-edit-color);
+    color: var(--primary-font-color);
+    border: 2px solid var(--primary-font-color);
+    border-radius: 40px;
+    font-size: var(--font-btns-size);
+    font-weight: var(--font-btns-weight);
+    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    transition: .3s;
+}
+
+.btn:hover {
+    background-color: var(--secondary-edit-color);
+}
+
 .edit-btn {
     width: 184px;
     height: 32px;

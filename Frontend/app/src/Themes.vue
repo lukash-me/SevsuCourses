@@ -258,7 +258,7 @@
                 } 
                 else {
                     console.error('No course ID provided');
-                }
+            }
         },
 
         methods: {

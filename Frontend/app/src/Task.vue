@@ -15,8 +15,17 @@
             <span>{{ task.condition }}</span>
             </div>
 
-            <div class="button-container">
-            <button @click="openAnswerModal">Ответить</button>
+            <div class="btns-container">
+              <button class="btn" @click="openAnswerModal">Ответить</button>
+            </div>
+
+            <div class="selector-container">
+              <span>Выбранный студент:</span>
+              <select v-model="activeStudent" class="selector" name="student-selector" id="">
+                <option v-for="student in students" :key="student.id" :value="student">
+                  {{ student.fio }}
+                </option>
+              </select>
             </div>
 
             <div id="answer" class="container">
@@ -25,8 +34,9 @@
             <div class="status">Ожидает проверки / оценка</div>
             </div>
 
-            <div class="button-container">
-            <button @click="openMarkModal">Оценить работу</button>
+
+            <div class="btns-container">
+              <button class="btn" @click="openMarkModal">Оценить работу</button>
             </div>
 
             <div class="container">
@@ -34,33 +44,69 @@
             <span>{{ studentAnswer.replyText }}</span>
             </div>
 
-            <div class="button-container">
-            <button @click="prevTask">Предыдущее задание</button>
-            <button @click="nextTask">Следующее задание</button>
-            </div>
-
-            <div class="button-container">
-            <button @click="goToThemes">Вернуться к темам</button>
+            <div class="btns-container">
+              <button class="btn" @click="goToThemes">Вернуться к темам</button>
             </div>
 
             <!-- Модальное окно ответа -->
-            <div v-if="showAnswerModal" class="shadow">
-            <div class="modal">
-                <span>Введите текст ответа</span>
-                <textarea v-model="answerText"></textarea>
-                <div class="button-container">
-                <button @click="closeAnswerModal">Вернуться к задаче</button>
-                <button @click="sendAnswer">Отправить</button>
+            <div v-if="showAnswerModal" class="overlay">
+              <form class="answer-send-form" @submit.prevent="handleSubmit" novalidate>
+
+                <h1>Отправить ответ</h1>
+
+                <div class="field">
+                  <span>Введите текст ответа</span>
+                  <textarea v-model="form.answerText"
+                  class="box"
+                  ></textarea>
                 </div>
+                
+                <div class="btns-form-container">
+                  <button class="cancel-btn" @click="closeAnswerModal">Вернуться</button>
+                  <button class="save-btn" @click="sendAnswer">Отправить</button>
+                </div>
+              </form>
             </div>
+
+            <div v-if="isMarkModalOpen" class="overlay">
+              <form class="reply-send-form" @submit.prevent="handleSubmit" novalidate>
+                <h1>Оценивание ответа студента</h1>
+
+                <div class="field">
+                  <span>Ответ студента</span>
+                  <textarea class="box" v-model="studentAnswer.answerText"></textarea>
+                </div>
+
+                <div class="field">
+                  <span>Эталонное решение</span>
+                  <textarea class="box" v-model="formMark.solutionText"></textarea>
+                </div>
+
+                <div class="field">
+                  <span>Ваш комментарий</span>
+                  <textarea class="box" v-model="formMark.replyText"></textarea>
+                </div>
+
+                <div class="field">
+                  <span>Оценить выполнение</span>
+                  <input class="markBox" v-model="formMark.mark" type="number" name="mark">
+                </div>
+                
+                <div class="btns-form-container">
+                  <button class="cancel-btn" @click="closeMarkModal"> Вернуться</button>
+                  <button class="save-btn" @click="sendReply">Отправить</button>
+                </div>
+              </form>
             </div>
+
         </div>
     </div>
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, reactive, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import Cookies from "js-cookie";
 
 export default {
   name: "TaskPage",
@@ -68,125 +114,269 @@ export default {
   setup() {
     const route = useRoute();
     const router = useRouter();
+    const activeStudent = ref({});
 
     const task = ref({});
     const themeData = ref({});
     const studentAnswer = ref({});
+    const students = ref({});
     const showAnswerModal = ref(false);
-    const answerText = ref("");
+    const isMarkModalOpen = ref(false);
 
-    const fetchTask = async (taskId) => {
-      try {
-        const response = await fetch(`http://localhost:5036/Task/${taskId}`);
-        if (!response.ok) throw new Error("Failed to fetch task");
-        task.value = await response.json();
-      } 
-      catch (error) {
-        console.error("Error fetching task:", error);
-      }
-    };
+    const form = reactive({
+                answerText: null,
+    });
 
-    const fetchThemeData = async (themeId) => {
-      try {
-        const response = await fetch(`http://localhost:5036/Theme/${themeId}`);
-        if (!response.ok) throw new Error("Failed to fetch theme data");
-        const data = await response.json();
-        themeData.value = { title: data.title, number: data.number };
-      } catch (error) {
-        console.error("Error fetching theme data:", error);
-      }
-    };
-
-    const fetchAnswer = async (taskId, studentId) => {
-      try {
-        const response = await fetch(
-          `http://localhost:5036/Answer/taskId=${taskId}&studentId=${studentId}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch answer");
-        studentAnswer.value = await response.json();
-      } catch (error) {
-        console.error("Error fetching answer:", error);
-      }
-    };
-
-    const sendAnswer = async () => {
-
-        if (!studentAnswer.value) {
-            console.error("Ошибка: studentAnswer не определён");
-            return;
-        }
-
-        const data = { text: answerText.value };
-        try {
-            const response = await fetch(
-                `http://localhost:5036/Answer/${studentAnswer.value.id}/answerText`,
-                {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data),
-                }
-            );
-            if (!response.ok) throw new Error("Failed to send answer");
-
-            const updatedAnswer = await fetchAnswer(route.query.id, getCookie("id"));
-            if (updatedAnswer) {
-                studentAnswer.value = updatedAnswer; 
-            }
-            closeAnswerModal();
-        } 
-        catch (error) {
-            console.error("Error sending answer:", error);
-        }
-    };
-
-    const openAnswerModal = () => (showAnswerModal.value = true);
-    const closeAnswerModal = () => (showAnswerModal.value = false);
-
-    const prevTask = () => {
-      // Логика для перехода к предыдущему заданию
-    };
-
-    const nextTask = () => {
-      // Логика для перехода к следующему заданию
-    };
+    const formMark = reactive({
+      solutionText: null,
+      replyText: null,
+      mark: 0
+    });
 
     const goToThemes = () => {
       router.push({ name: "themesPage" });
     };
 
-    const getCookie = (name) => {
-      const cookies = document.cookie.split("; ");
-      for (const cookie of cookies) {
-        const [key, value] = cookie.split("=");
-        if (key === name) return value;
-      }
-      return null;
-    };
+    async function fetchAnswer(taskId, studentId) {
+      try {
+        const response = await fetch(
+          `http://localhost:5036/Answer/last/taskId=${taskId}&studentId=${studentId}`
+        );
+        if (!response.ok) {
+          studentAnswer.value = {"answerText": "Студент еще не предоставил ответ на этот вопрос"}
+          throw new Error("Failed to fetch answer");
+        }
+        studentAnswer.value = await response.json();
 
-    onMounted(async () => {
+      } catch (error) {
+        console.error("Error fetching answer:", error);
+      }
+    }
+
+    watch(activeStudent, async (newStudent) => {
+
       const taskId = route.query.id;
-      const studentId = getCookie("id");
-      if (taskId) {
-        await fetchTask(taskId);
-        await fetchThemeData(task.value.themeId);
-        await fetchAnswer(taskId, studentId);
+
+      if (newStudent) {
+        await fetchAnswer(taskId, newStudent.id);
       }
     });
 
     return {
       task,
+      form,
+      formMark,
+      students,
+      route,
       themeData,
       studentAnswer,
       showAnswerModal,
-      answerText,
-      openAnswerModal,
-      closeAnswerModal,
-      sendAnswer,
-      prevTask,
-      nextTask,
+      isMarkModalOpen,
+      activeStudent,
       goToThemes,
     };
   },
+
+  async mounted(){
+    const taskId = this.$route.query.id;
+    await this.fetchTask(taskId);
+
+    const theme = await this.fetchThemeData(this.task.themeId);
+
+      if (taskId) {
+
+          this.themeData = { title: theme.title, number: theme.number };
+
+          if (this.getRole() === "Student"){
+
+            const studentId = this.getId();
+            const studentName = await this.getStudentName(studentId);
+
+            this.activeStudent = { id: studentId, fio: studentName};
+            this.students = [{ id: studentId, fio: studentName}];
+
+            await this.fetchAnswer(taskId, this.activeStudent.id);
+          }
+
+          else if (this.getRole() === "Mentor") {
+
+            const mentorId = this.getId();
+
+            const groups = await this.getMentorCourseGroups(mentorId, theme.courseId);
+
+            let studentsData = [];
+
+            for (const groupId of groups.groupIds) {
+              const stdts = await this.getStudentsInfo(groupId);
+
+              for (const student of stdts){
+                studentsData.push(student);
+              }
+            }
+            
+            const students = studentsData.map(({ isAttest, ...rest }) => rest); // eslint-disable-line no-unused-vars
+
+            this.students = students;
+
+            this.activeStudent = this.students[0];
+          }
+      } 
+      else {
+          console.error('No task ID provided');
+    }
+  },
+
+  methods: {
+
+    openAnswerModal() {
+      this.showAnswerModal = true;
+    },
+
+    closeAnswerModal() {
+      this.showAnswerModal = false;
+    },
+
+    openMarkModal() {
+      this.isMarkModalOpen = true;
+
+      this.formMark.solutionText = "ok";
+    },
+
+    closeMarkModal() {
+      this.isMarkModalOpen = false;
+    },
+
+    getId() {
+      return Cookies.get("id");
+    },
+
+    getRole() {
+      return Cookies.get("role");
+    },
+
+    async getStudentsInfo(groupId){
+      try {
+        const response = await fetch(`http://localhost:5036/Student/all-id-fio-status/${groupId}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+
+        const data = await response.json();
+        return data;
+
+      } 
+      catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    },
+
+    async getMentorCourseGroups(mentorId, courseId) {
+      try {
+        const response = await fetch(`http://localhost:5036/Group/${mentorId}&${courseId}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+
+        const data = await response.json();
+        return data;
+
+      } 
+      catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    },
+
+    async getStudentIds(studentId) {
+
+      try {
+        const response = await fetch(`http://localhost:5036/Student/main-info/${studentId}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+
+        const data = await response.json();
+        return data.fio;
+
+      } 
+      catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    },
+    
+    async getStudentName(studentId) {
+
+      try {
+        const response = await fetch(`http://localhost:5036/Student/main-info/${studentId}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+
+        const data = await response.json();
+        return data.fio;
+
+      } 
+      catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    },
+
+    async fetchTask(taskId) {
+      try {
+        const response = await fetch(`http://localhost:5036/Task/${taskId}`);
+        if (!response.ok) throw new Error("Failed to fetch task");
+        this.task = await response.json();
+      } 
+      catch (error) {
+        console.error("Error fetching task:", error);
+      }
+    },
+
+    async fetchThemeData(themeId) {
+
+      try {
+        const response = await fetch(`http://localhost:5036/Theme/${themeId}`);
+        if (!response.ok) throw new Error("Failed to fetch theme data");
+        const data = await response.json();
+
+        return data
+        
+      } catch (error) {
+        console.error("Error fetching theme data:", error);
+      }
+    },
+
+    
+
+    async sendAnswer() {
+
+      const request = {
+        taskId: this.$route.query.id,
+        studentId: this.getStudentId(),
+        answerText: this.form.answerText
+      }
+
+      try {
+          const response = await fetch(
+              `http://localhost:5036/Answer`,
+              {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(request),
+              }
+          );
+          if (!response.ok) throw new Error("Failed to send answer");
+
+          this.studentAnswer.answerText = request.answerText;
+
+          this.closeAnswerModal();
+      } 
+      catch (error) {
+          console.error("Error sending answer:", error);
+      }
+    }
+  }
+
+
 };
 </script>
 
@@ -281,10 +471,25 @@ h2 {
     object-fit:cover;
 }
 
-.button-container {
+.btns-container {
     width: 97%;
     display: flex;
     margin-bottom: 40px;
+}
+
+.btns-container button{
+    font-size: 18px;
+}
+
+.btns-form-container {
+
+  margin-top: 40px;
+  margin-bottom: 40px;
+  position: relative;
+  align-self: center;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
 }
 
 .block .status {
@@ -293,73 +498,30 @@ h2 {
     font-size: 2rem;
 }
 
-button {
-    width: 250px;
-    height: 80px;
-    background: #f4f4f4;
-    border-radius: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 18px;
-    color: #1f2d6b;
-    margin-right: 20px;
-    box-shadow: 0 5px 10px #000;
-    cursor: pointer;
+.selector-container {
+  display: flex;
+  align-self: flex-start;
+
+  align-items: center;
 }
 
-.shadow .modal {
-    height: 800px;
-    width: 1400px;
-    background: linear-gradient(to right, #141e30, #243b55);
-    position: fixed;
-    display: flex;
-    left: 10%;
-    top: 10%;
-    overflow: hidden;
-    z-index: 900;
-    border: 4px solid white;
-    border-radius: .5rem;
-    flex-direction: column;
+.selector-container .selector {
+  width: 400px;
+  height: 30px;
+
+  margin-left: 20px;
+  border-radius: 10px;
 }
 
-.shadow .modal textarea{
-    align-self: center;
-    height: 70%;
-    width: 90%;
-    border-radius: 6px;
-    color: #000;
-    font-size: 14px;
-    padding: 0;
+select {
+  padding-left: 5px;
+  color: black;
+  font-size: 14px;
 }
 
-.shadow .modal .button-container{
-    margin-top: 40px;
-    margin-bottom: 40px;
-    position: relative;
-    align-self: center;
-    display: flex;
-    justify-content: center;
+option {
+  color: #000;
+  font-size: 14px;
 }
-  
-.shadow::before {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 110%;
-    height: 330%;
-    background: rgba(0, 0, 0, 0.7); 
-    pointer-events: auto; 
-}
-  
-.shadow .modal span{
-    margin-top: 40px;
-    margin-bottom: 20px;
-    margin-left: 5%;
-    font-size: 2rem;
-}
-  
-
 
 </style>

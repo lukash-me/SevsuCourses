@@ -23,12 +23,13 @@ public class GetThemesByCourseService
         foreach (var theme in themes)
         {
             var id = theme.Id;
+            var crseId = theme.CourseId;
             var title = theme.Title;
             var text = theme.Text;
             var photo = theme.Photo;
             var number = theme.Number;
 
-            var themeResponse = new ThemeResponse(id, title, text, photo, number);
+            var themeResponse = new ThemeResponse(id, crseId, title, text, photo, number);
             response.Add(themeResponse);
         }
 

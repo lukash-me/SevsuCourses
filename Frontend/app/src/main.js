@@ -6,6 +6,7 @@ import './assets/styles/forms.css';
 import './assets/styles/info-modals.css';
 
 const app = createApp(App);
+
 app
 .use(router)
 .mount('#app');

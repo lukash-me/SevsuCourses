@@ -49,6 +49,30 @@ public class GroupController : ControllerBase
     }
     
     /// <summary>
+    /// Получить id всех групп ментора на определенном курсе
+    /// </summary>
+    /// <param name="mentorId"></param>
+    /// <param name="courseId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("{mentorId:guid}&{courseId:guid}")]
+    public async Task<ActionResult<Guid>> GetById(
+        [FromRoute] Guid mentorId,
+        [FromRoute] Guid courseId,
+        [FromServices] GetGroupsByMentorIdAndCourseId service,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new GroupsRequest(mentorId, courseId);
+        var result = await service.Handle(request, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
     /// Изменить ментора для группы по id группы и id ментора
     /// </summary>
     /// <param name="groupId"></param>
