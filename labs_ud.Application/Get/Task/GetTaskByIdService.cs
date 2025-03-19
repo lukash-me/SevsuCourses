@@ -24,11 +24,10 @@ public class GetTaskByIdService
         var themeId = task.ThemeId;
         var title = task.Title;
         var condition = task.Condition;
-        var attempsAmount = task.AttempsAmount;
         var minMark = task.MinMark;
         var maxMark = task.MaxMark;
 
-        var response = new TaskResponse(id, themeId, title, condition, attempsAmount, minMark, maxMark);
+        var response = new TaskResponse(id, themeId, title, condition, minMark, maxMark);
 
         return response;
     }
@@ -39,6 +38,5 @@ public record TaskResponse(
     Guid ThemeId,
     string Title,
     string Condition,
-    int AttempsAmount,
     int MinMark,
     int MaxMark);

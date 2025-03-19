@@ -21,11 +21,10 @@ public class GetMainInfoService
         
         var title = task.Title;
         var condition = task.Condition;
-        var attempsAmount = task.AttempsAmount;
         var minMark = task.MinMark;
         var maxMark = task.MaxMark;
 
-        var response = new MainInfoDto(title, condition, attempsAmount, minMark, maxMark);
+        var response = new MainInfoDto(title, condition, minMark, maxMark);
 
         return response;
     }

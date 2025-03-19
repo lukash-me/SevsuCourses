@@ -215,6 +215,7 @@
 <script>
     import { reactive, ref } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
+    import Cookies from "js-cookie";
 
     export default {
             name: "ThemesPage",
@@ -262,6 +263,10 @@
         },
 
         methods: {
+
+            getRole() {
+                return Cookies.get("role");
+            },
 
             async getCourseTitle(courseId) {
                 try {
@@ -330,7 +335,13 @@
                 this.router.push({ name: 'taskPage', query: { id: taskId } });
             },
 
-            toCreateTheme() {  
+            toCreateTheme() {
+
+                if (this.getRole() != "Teacher"){
+                    console.log("Недоступно для этой роли");
+                    return;
+                }
+
                 this.isModalFormOpen = true
             },
 
@@ -491,6 +502,12 @@
             },
 
             async toEditTheme(themeId) {
+
+                if (this.getRole() != "Teacher"){
+                    console.log("Недоступно для этой роли");
+                    return;
+                }
+
                 this.form.themeId = themeId;
                 this.isModalFormOpen = true;
 
@@ -502,6 +519,12 @@
             },
 
             toDeleteTheme(themeId) {
+
+                if (this.getRole() != "Teacher"){
+                    console.log("Недоступно для этой роли");
+                    return;
+                }
+
                 this.form.themeId = themeId;
                 this.isModalDeleteInfoOpen = true;
             },
@@ -520,6 +543,12 @@
             },
 
             toCreateTask(themeId) {
+
+                if (this.getRole() != "Teacher"){
+                    console.log("Недоступно для этой роли");
+                    return;
+                }
+
                 this.isModalFormTaskOpen = true;
                 this.formTask.themeId = themeId;
             },
@@ -545,7 +574,14 @@
             },
 
             toDeleteTask(event, taskId) {
+
                 event.stopPropagation(event);
+
+                if (this.getRole() != "Teacher"){
+                    console.log("Недоступно для этой роли");
+                    return;
+                }
+
                 this.formTask.taskId = taskId;
                 this.isModalDeleteTaskInfoOpen = true;
             },

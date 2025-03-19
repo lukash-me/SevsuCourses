@@ -31,7 +31,7 @@
             <div id="answer" class="container">
             <h2>Ответ студента</h2>
             <span>{{ studentAnswer.answerText }}</span>
-            <div class="status">Ожидает проверки / оценка</div>
+            <div class="status"></div>
             </div>
 
 
@@ -41,7 +41,7 @@
 
             <div class="container">
             <h2>Ответ ментора</h2>
-            <span>{{ studentAnswer.replyText }}</span>
+            <span>{{ studentAnswer.replyText ? studentAnswer.replyText : "Ментор пока не оценил ответ" }}</span>
             </div>
 
             <div class="btns-container">
@@ -236,10 +236,12 @@ export default {
       this.showAnswerModal = false;
     },
 
-    openMarkModal() {
+    async openMarkModal() {
       this.isMarkModalOpen = true;
 
-      this.formMark.solutionText = "ok";
+      const taskId = this.$route.query.id;
+      const solution = await this.getSolution(taskId);
+      this.formMark.solutionText = solution;
     },
 
     closeMarkModal() {
@@ -345,9 +347,28 @@ export default {
       }
     },
 
-    
+    async getSolution(taskId) {
+      try {
+        const response = await fetch(`http://localhost:5036/Solution/answer/${taskId}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+
+        const data = await response.json();
+        return data[0];
+
+      } 
+      catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    },
 
     async sendAnswer() {
+
+      if (["Mentor", "Teacher"].includes(this.getRole())){
+        console.log("Нельзя за эту роль");
+        return;
+      }
 
       const request = {
         taskId: this.$route.query.id,
@@ -373,7 +394,40 @@ export default {
       catch (error) {
           console.error("Error sending answer:", error);
       }
+    },
+
+    async sendReply(){
+
+      const request = {
+        replyText: this.formMark.replyText,
+        mark: this.formMark.mark
+      }
+      
+      try {
+
+          console.log(this.formMark.replyText);
+          console.log(this.formMark.mark);
+
+          const response = await fetch(
+              `http://localhost:5036/Answer/${this.studentAnswer.id}/reply-mark`,
+              {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(request),
+              }
+          );
+          if (!response.ok) throw new Error("Failed to send answer");
+
+          this.studentAnswer.answerText = request.answerText;
+
+          this.closeMarkModal();
+      } 
+      catch (error) {
+          console.error("Error sending answer:", error);
+      }
     }
+
+
   }
 
 

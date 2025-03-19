@@ -28,7 +28,6 @@ public class UpdateMainInfoService
         taskResult.Value.UpdateMainInfo(
             request.Dto.Title,
             request.Dto.Condition,
-            request.Dto.AttempsAmount,
             request.Dto.MinMark,
             request.Dto.MaxMark);
         

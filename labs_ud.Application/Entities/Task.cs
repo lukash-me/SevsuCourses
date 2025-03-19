@@ -10,7 +10,6 @@ public class Task
         Guid themeId,
         string title,
         string condition,
-        int attempsAmount,
         int minMark,
         int maxMark)
     {
@@ -18,7 +17,6 @@ public class Task
         ThemeId = themeId;
         Title = title;
         Condition = condition;
-        AttempsAmount = attempsAmount;
         MinMark = minMark;
         MaxMark = maxMark;
     }
@@ -27,20 +25,17 @@ public class Task
     public Guid ThemeId { get; set; }
     public string Title { get; set; }
     public string Condition { get; set; }
-    public int AttempsAmount { get; set; }
     public int MinMark { get; set; }
     public int MaxMark { get; set; }
     
     public void UpdateMainInfo(
         string title,
         string condition,
-        int attempsAmount,
         int minMark,
         int maxMark)
     {
         Title = title;
         Condition = condition;
-        AttempsAmount = attempsAmount;
         MinMark = minMark;
         MaxMark = maxMark;
     }
@@ -58,7 +53,6 @@ public class Task
             themeId,
             title,
             condition,
-            attempsAmount,
             minMark,
             maxMark
         );

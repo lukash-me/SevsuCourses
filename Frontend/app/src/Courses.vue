@@ -253,6 +253,11 @@ export default {
         async editCourse(event, courseId) {
             event.stopPropagation(event);
 
+            if (this.getRole() != "Teacher"){
+                console.log("Недоступно для этой роли");
+                return;
+            }
+
             const data = await this.getCourseInfo(courseId);
 
             this.form.courseId = courseId;
@@ -333,7 +338,16 @@ export default {
             }
         },
 
+        getRole() {
+            return Cookies.get("role");
+        },
+
         toCreateCourse() {
+
+            if (this.getRole() != "Teacher"){
+                    console.log("Недоступно для этой роли");
+                    return;
+                }
 
             this.form.courseId = null;
             this.form.image = null;
@@ -344,7 +358,14 @@ export default {
         },
 
         toDeleteCourse(event, id) {
+
             event.stopPropagation();
+
+            if (this.getRole() != "Teacher"){
+                console.log("Недоступно для этой роли");
+                return;
+            }
+            
             this.openDeleteModal();
 
             this.form.courseId = id;

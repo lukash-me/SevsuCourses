@@ -26,12 +26,13 @@ public class GetAllAnswersByStudentIdTaskIdService
         var response = new List<AnswerResponse>();
         foreach (var answer in answers)
         {
+            var id = answer.Id;
             var mark = answer.Mark;
             var replyText = answer.ReplyText;
             var answerText = answer.AnswerText;
             var dateSent = answer.DateSent;
             var dateReplied = answer.DateReplied;
-            var answerResponse = new AnswerResponse(mark, replyText, answerText, dateSent, dateReplied); 
+            var answerResponse = new AnswerResponse(id, mark, replyText, answerText, dateSent, dateReplied); 
             
             response.Add(answerResponse);
         }
@@ -41,6 +42,7 @@ public class GetAllAnswersByStudentIdTaskIdService
 }
 
 public record AnswerResponse(
+    Guid Id,
     int Mark,
     string? ReplyText,
     string AnswerText,
