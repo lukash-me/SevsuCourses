@@ -36,3 +36,13 @@
     color: #A70000 !important;
     font-weight: 900;
 }
+
+#rights .btns-container {
+    margin-top: 30px;
+    justify-content: center;
+  }
+  
+  #rights {
+    text-align: center;
+    z-index: 999;
+  }

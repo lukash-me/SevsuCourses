@@ -1,7 +1,21 @@
 <template>
+    <div v-if="haveNoRightsModal" class="overlay">
+        <div class="delete-confirm" id="rights">
+            <div class="text-modal">
+                <span>У вас<span class="red-font"> нет прав</span> для</span>
+                <span> <b>выполнения</b> данного действия</span>
+            </div>
+            <div class="btns-container">
+                <button class="cancel-btn" @click="closeNoRightsModal">Увы</button>
+            </div>
+        </div>
+    </div>
+    <div></div>
     <div class="container">
         <div class="course-add-card">
-            <div class="add-button" @click="toCreateCourse">Добавить курс</div>
+            <div class="add-button" @click="toCreateCourse">Добавить курс
+                <img src="images/add.jpg" alt="">
+            </div>
         </div>
         <div v-for="(cardsRow, index) in courseRows" :key="index" class="cards-row">
             <div
@@ -12,7 +26,7 @@
                 @click="goToCourse(course.id)"
                 >
                 <div class="image">
-                    <img :src="courseImage" alt="Course Image"/>
+                    <img :src="course.photo" alt="Course Image"/>
                     <div class="edit-btn" @click="editCourse($event, course.id)">Редактировать</div>
                     <div class="delete-btn" @click="toDeleteCourse($event, course.id)">Удалить</div>
                 </div>
@@ -105,7 +119,7 @@ export default {
 
     setup() {
         const router = useRouter();
-        const courseImage = '/images/abstract_02.jpg';
+        const courseImage = '/images/add.jpg';
         let isModalFormOpen = ref(false);
         let isModalDeleteInfoOpen = ref(false); 
         const form = reactive({
@@ -116,7 +130,24 @@ export default {
             method: null
         });
 
-        return { router, courseImage, isModalFormOpen, isModalDeleteInfoOpen, form };
+        let haveNoRightsModal = ref(false);
+
+        function openNoRightsModal(){
+            haveNoRightsModal.value = true;
+        }
+
+        function closeNoRightsModal(){
+            haveNoRightsModal.value = false;
+        }
+
+        return { router, 
+            courseImage, 
+            isModalFormOpen, 
+            isModalDeleteInfoOpen, 
+            form,
+            haveNoRightsModal,
+            openNoRightsModal,
+            closeNoRightsModal};
     },
 
     data() {
@@ -228,6 +259,7 @@ export default {
             const data = await this.getAllCourses();
             let inRow = 1;
             let cardsRow = [];
+            console.log(data);
             
             data.forEach((course) => {
                 if (inRow === 4) {
@@ -235,6 +267,8 @@ export default {
                     cardsRow = [];
                     inRow = 0;
                 }
+                this.courseImage = course.photo;
+                console.log(this.courseImage);
                 cardsRow.push(course);
                 inRow++;
             });
@@ -253,8 +287,8 @@ export default {
         async editCourse(event, courseId) {
             event.stopPropagation(event);
 
-            if (this.getRole() != "Teacher"){
-                console.log("Недоступно для этой роли");
+            if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                this.openNoRightsModal();
                 return;
             }
 
@@ -344,8 +378,8 @@ export default {
 
         toCreateCourse() {
 
-            if (this.getRole() != "Teacher"){
-                    console.log("Недоступно для этой роли");
+            if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                    this.openNoRightsModal();
                     return;
                 }
 
@@ -361,8 +395,8 @@ export default {
 
             event.stopPropagation();
 
-            if (this.getRole() != "Teacher"){
-                console.log("Недоступно для этой роли");
+            if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                this.openNoRightsModal();
                 return;
             }
             
@@ -423,4 +457,10 @@ export default {
         display: flex;
         gap: 35px;
     }
+
+.add-button {
+    background: #fff;
+}
+
+
 </style>

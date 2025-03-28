@@ -3,7 +3,9 @@ import loginPage from './Login.vue';
 import coursesPage from './Courses.vue';
 import themesPage from './Themes.vue';
 import taskPage from './Task.vue';
+import groupsPage from './Groups.vue';
 import testCreating from './TestCreating.vue';
+import adminPage from './Admin.vue';
 
 const routes = [
     {
@@ -30,6 +32,16 @@ const routes = [
         path: '/test-creating',
         name: 'testCreating',
         component: testCreating,
+    },
+    {
+        path: '/groups-page',
+        name: 'groupsPage',
+        component: groupsPage,
+    },
+    {
+        path: '/admin-page',
+        name: 'adminPage',
+        component: adminPage,
     },
 ];
 

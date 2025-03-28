@@ -1,5 +1,15 @@
 <template>
-
+    <div v-if="haveNoRightsModal" class="overlay">
+        <div class="delete-confirm" id="rights">
+            <div class="text-modal">
+                <span>У вас<span class="red-font"> нет прав</span> для</span>
+                <span> <b>выполнения</b> данного действия</span>
+            </div>
+            <div class="btns-container">
+                <button class="cancel-btn" @click="closeNoRightsModal">Увы</button>
+            </div>
+        </div>
+    </div>
     <div class="course-title">
         <span>{{ courseTitle }}</span>
     </div>
@@ -229,6 +239,17 @@
             let isModalDeleteInfoOpen = ref(false);
             let isModalFormTaskOpen = ref(false);
             let isModalDeleteTaskInfoOpen = ref(false);
+
+            let haveNoRightsModal = ref(false);
+
+            function openNoRightsModal(){
+                haveNoRightsModal.value = true;
+            }
+
+            function closeNoRightsModal(){
+                haveNoRightsModal.value = false;
+            }
+
             const form = reactive({
                 themeId: null,
                 image: null,
@@ -247,7 +268,7 @@
                 maxMark: null
             })
 
-            return { courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, isModalDeleteTaskInfoOpen, form, formTask};
+            return { haveNoRightsModal, openNoRightsModal, closeNoRightsModal, courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, isModalDeleteTaskInfoOpen, form, formTask};
         },
 
         async mounted() {
@@ -337,8 +358,8 @@
 
             toCreateTheme() {
 
-                if (this.getRole() != "Teacher"){
-                    console.log("Недоступно для этой роли");
+                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                    this.openNoRightsModal();
                     return;
                 }
 
@@ -503,8 +524,8 @@
 
             async toEditTheme(themeId) {
 
-                if (this.getRole() != "Teacher"){
-                    console.log("Недоступно для этой роли");
+                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                    this.openNoRightsModal();
                     return;
                 }
 
@@ -520,8 +541,8 @@
 
             toDeleteTheme(themeId) {
 
-                if (this.getRole() != "Teacher"){
-                    console.log("Недоступно для этой роли");
+                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                    this.openNoRightsModal();
                     return;
                 }
 
@@ -544,8 +565,8 @@
 
             toCreateTask(themeId) {
 
-                if (this.getRole() != "Teacher"){
-                    console.log("Недоступно для этой роли");
+                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                    this.openNoRightsModal();
                     return;
                 }
 
@@ -577,8 +598,8 @@
 
                 event.stopPropagation(event);
 
-                if (this.getRole() != "Teacher"){
-                    console.log("Недоступно для этой роли");
+                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                    this.openNoRightsModal();
                     return;
                 }
 

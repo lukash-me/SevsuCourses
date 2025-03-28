@@ -1,4 +1,15 @@
 <template>
+  <div v-if="haveNoRightsModal" class="overlay">
+        <div class="delete-confirm" id="rights">
+            <div class="text-modal">
+                <span>У вас<span class="red-font"> нет прав</span> для</span>
+                <span> <b>выполнения</b> данного действия</span>
+            </div>
+            <div class="btns-container">
+                <button class="cancel-btn" @click="closeNoRightsModal">Увы</button>
+            </div>
+        </div>
+    </div>
     <div>
         <div class="block">
             <h1 v-if="themeData">Theme №{{ themeData.number + 1 }}. {{ themeData.title }}</h1>
@@ -98,7 +109,6 @@
                 </div>
               </form>
             </div>
-
         </div>
     </div>
 </template>
@@ -122,6 +132,7 @@ export default {
     const students = ref({});
     const showAnswerModal = ref(false);
     const isMarkModalOpen = ref(false);
+    let haveNoRightsModal = ref(false);
 
     const form = reactive({
                 answerText: null,
@@ -162,6 +173,14 @@ export default {
       }
     });
 
+    function closeNoRightsModal() {
+      haveNoRightsModal.value = false;
+    }
+
+    function openNoRightsModal() {
+      haveNoRightsModal.value = true;
+    }
+
     return {
       task,
       form,
@@ -174,6 +193,10 @@ export default {
       isMarkModalOpen,
       activeStudent,
       goToThemes,
+      fetchAnswer,
+      haveNoRightsModal,
+      closeNoRightsModal,
+      openNoRightsModal,
     };
   },
 
@@ -229,6 +252,12 @@ export default {
   methods: {
 
     openAnswerModal() {
+
+      if (Cookies.get("role") != "Student" && Cookies.get("role") != "admin"){
+        this.openNoRightsModal();
+        return
+      }
+
       this.showAnswerModal = true;
     },
 
@@ -237,6 +266,12 @@ export default {
     },
 
     async openMarkModal() {
+
+      if (Cookies.get("role") != "Mentor" & Cookies.get("role") != "admin"){
+        this.openNoRightsModal();
+        return
+      }
+
       this.isMarkModalOpen = true;
 
       const taskId = this.$route.query.id;
@@ -372,7 +407,7 @@ export default {
 
       const request = {
         taskId: this.$route.query.id,
-        studentId: this.getStudentId(),
+        studentId: this.getId(),
         answerText: this.form.answerText
       }
 
@@ -438,6 +473,8 @@ export default {
 
 
 <style scoped>
+
+
 
 .theme-title {
     margin-top: 80px;
@@ -577,5 +614,7 @@ option {
   color: #000;
   font-size: 14px;
 }
+
+
 
 </style>
