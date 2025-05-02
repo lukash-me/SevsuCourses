@@ -1,4 +1,6 @@
+using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
+using labs_ud.Application.Entities.Validation;
 using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
 
@@ -28,29 +30,68 @@ public class Task
     public int MinMark { get; set; }
     public int MaxMark { get; set; }
     
-    public void UpdateMainInfo(
+    public Result<string, Error> UpdateMainInfo(
         string title,
         string condition,
         int minMark,
         int maxMark)
     {
+        var checkMainInfoResult = Block.CheckMainInfo(title, condition);
+        if (checkMainInfoResult.IsFailure)
+        {
+            return checkMainInfoResult.Error;
+        }
+        
+        if (int.IsNegative(minMark))
+        {
+            return Errors.Errors.General.ValueIsInvalid("min mark");
+        }
+        
+        if (int.IsNegative(maxMark) || minMark > maxMark)
+        {
+            return Errors.Errors.General.ValueIsInvalid("max mark");
+        }
+        
         Title = title;
         Condition = condition;
         MinMark = minMark;
         MaxMark = maxMark;
+
+        return "Success";
     }
     
     public static Result<Task, Error> Create(
-        Guid themeId,
+        string themeId,
         string title,
         string condition,
-        int attempsAmount,
         int minMark,
         int maxMark
     )
     {
+        var checkGuidResult = Ids.CheckGuid(themeId, "theme id");
+        if (checkGuidResult.IsFailure)
+        {
+            return checkGuidResult.Error;
+        }
+        
+        var checkMainInfoResult = Block.CheckMainInfo(title, condition);
+        if (checkMainInfoResult.IsFailure)
+        {
+            return checkMainInfoResult.Error;
+        }
+        
+        if (int.IsNegative(minMark))
+        {
+            return Errors.Errors.General.ValueIsInvalid("min mark");
+        }
+        
+        if (int.IsNegative(maxMark) || minMark > maxMark)
+        {
+            return Errors.Errors.General.ValueIsInvalid("max mark");
+        }
+        
         var task = new Task(
-            themeId,
+            Guid.Parse(themeId),
             title,
             condition,
             minMark,

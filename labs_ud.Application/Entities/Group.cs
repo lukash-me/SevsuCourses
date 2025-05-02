@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
 using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
@@ -23,22 +24,49 @@ public class Group
     public DateOnly End { get; set; }
     public string Status { get; set; }
 
-    public void UpdateMentor(Guid mentorId)
+    public Result<string, Error> UpdateMentor(string? mentorId)
     {
-        MentorId = mentorId;
+        if (mentorId != null && Regex.IsMatch(mentorId, Constants.Regexes.GUID_REGEX) == false)
+        {
+            return Errors.Errors.General.ValueIsInvalid("mentorId");
+        }
+        
+        MentorId = Guid.Parse(mentorId);
+
+        return "Success";
     }
     
     public static Result<Group, Error> Create(
-        Guid courseId,
-        Guid? mentorId,
+        string courseId,
+        string? mentorId,
         DateOnly start,
         DateOnly end,
         string status
     )
     {
+        if (Regex.IsMatch(courseId, Constants.Regexes.GUID_REGEX) == false)
+        {
+            return Errors.Errors.General.ValueIsInvalid("courseId");
+        }
+
+        if (mentorId != null && Regex.IsMatch(mentorId, Constants.Regexes.GUID_REGEX) == false)
+        {
+            return Errors.Errors.General.ValueIsInvalid("mentorId");
+        }
+        
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return Errors.Errors.General.ValueIsRequired("status");
+        }
+        
+        if (status.Length > Constants.Values.STATUS_LENGTH)
+        {
+            return Errors.Errors.General.ValueIsInvalid("status");
+        }
+        
         var group = new Group(
-            courseId,
-            mentorId,
+            Guid.Parse(courseId),
+            Guid.Parse(mentorId),
             start,
             end,
             status

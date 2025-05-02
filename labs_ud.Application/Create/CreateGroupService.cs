@@ -25,7 +25,6 @@ public class CreateGroupService
         var end = request.End;
         
         var status = request.Status;
-        
 
         var groupResult = Group.Create(
             courseId,

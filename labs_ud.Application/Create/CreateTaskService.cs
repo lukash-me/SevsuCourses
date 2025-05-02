@@ -23,8 +23,6 @@ public class CreateTaskService
 
         var condition = request.Condition;
 
-        var attempsAmount = request.AttempsAmount;
-
         var minMark = request.MinMark;
 
         var maxMark = request.MaxMark;
@@ -33,7 +31,6 @@ public class CreateTaskService
             themeId,
             title,
             condition,
-            attempsAmount,
             minMark,
             maxMark);
 

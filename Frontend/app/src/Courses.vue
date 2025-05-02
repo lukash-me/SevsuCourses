@@ -214,26 +214,18 @@ export default {
         },
 
         async createCourse(request) {
-            try {
-                const response = await fetch(`http://localhost:5036/Course`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(request),
-                });
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
 
-                const result = await response.json();
-                console.log("Курс успешно создан:", result);
+            const response = await fetch(`http://localhost:5036/Course`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(request),
+            });
 
-                return result;
-            } 
-            catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
+            const result = await response.json();
+
+            return result;
         },
 
         async deleteCourse(courseId) {
@@ -259,7 +251,6 @@ export default {
             const data = await this.getAllCourses();
             let inRow = 1;
             let cardsRow = [];
-            console.log(data);
             
             data.forEach((course) => {
                 if (inRow === 4) {
@@ -268,7 +259,6 @@ export default {
                     inRow = 0;
                 }
                 this.courseImage = course.photo;
-                console.log(this.courseImage);
                 cardsRow.push(course);
                 inRow++;
             });
@@ -328,7 +318,15 @@ export default {
                     description: this.form.description
                 }
 
-                this.form.courseId = await this.createCourse(request);
+                const result = await this.createCourse(request);
+
+                if ("errors" in result) {
+                    console.log(result);
+                    this.closeFormModal();
+                    return
+                }
+
+                this.form.courseId = result;
 
                 this.closeFormModal();
 
@@ -406,9 +404,7 @@ export default {
         },
 
         async removeCourse() {
-            console.log(this.form.courseId)
             const response = await this.deleteCourse(this.form.courseId);
-            console.log(this.form.courseId)
             console.log(response)
 
             this.closeDeleteModal();

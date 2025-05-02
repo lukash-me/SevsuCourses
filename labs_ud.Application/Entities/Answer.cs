@@ -1,4 +1,6 @@
+using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
+using labs_ud.Application.Entities.Validation;
 using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
 
@@ -45,8 +47,8 @@ public class Answer
     } 
     
     public static Result<Answer, Error> Create(
-        Guid taskId,
-        Guid studentId,
+        string taskId,
+        string studentId,
         int mark,
         string? replyText,
         string answerText,
@@ -54,9 +56,31 @@ public class Answer
         DateTime? dateReplied
     )
     {
+        var checkGuidResult = Ids.CheckGuid(studentId, "student id");
+        if (checkGuidResult.IsFailure)
+        {
+            return checkGuidResult.Error;
+        }
+        
+        checkGuidResult = Ids.CheckGuid(taskId, "task id");
+        if (checkGuidResult.IsFailure)
+        {
+            return checkGuidResult.Error;
+        }
+        
+        if (int.IsNegative(mark))
+        {
+            return Errors.Errors.General.ValueIsInvalid("mark");
+        }
+
+        if (string.IsNullOrWhiteSpace(answerText))
+        {
+            return Errors.Errors.General.ValueIsRequired("answerText");
+        }
+        
         var answer = new Answer(
-            taskId,
-            studentId,
+            Guid.Parse(taskId),
+            Guid.Parse(studentId),
             mark,
             replyText,
             answerText,

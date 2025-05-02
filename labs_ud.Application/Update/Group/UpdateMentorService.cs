@@ -24,7 +24,9 @@ public class UpdateMentorService
         if (groupResult.IsFailure)
             return groupResult.Error;
         
-        groupResult.Value.UpdateMentor(request.Dto.MentorId);
+        var updateResult = groupResult.Value.UpdateMentor(request.Dto.MentorId);
+        if (updateResult.IsFailure)
+            return updateResult.Error;
         
         await _unitOfWork.SaveChanges(cancellationToken);
 
@@ -38,5 +40,5 @@ public record UpdateMentorRequest(
     );
     
 public record UpdateMentorDto(
-    Guid MentorId
+    string MentorId
     );

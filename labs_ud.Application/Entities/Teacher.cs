@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using labs_ud.Application.Entities.Validation;
 using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
 
@@ -52,14 +53,30 @@ public class Teacher
         Photo = photo;
     }
     
-    public void UpdatePhone(string phone)
+    public Result<string, Error> UpdatePhone(string phone)
     {
+        var validationMainInfoResult = User.CheckMainInfo(Fio, Email, phone, Photo);
+        if (validationMainInfoResult.IsFailure)
+        {
+            return validationMainInfoResult.Error;
+        }
+        
         Phone = phone;
+
+        return "Success";
     }
     
-    public void UpdatePassword(string password)
+    public Result<string, Error> UpdatePassword(string password)
     {
+        var validationPasswordResult = User.CheckPassword(password);
+        if (validationPasswordResult.IsFailure)
+        {
+            return validationPasswordResult.Error;
+        }
+        
         Password = password;
+
+        return "Success";
     }
     
     public static Result<Teacher, Error> Create(
@@ -73,6 +90,29 @@ public class Teacher
         string password
     )
     {
+        var validationMainInfoResult = User.CheckMainInfo(fio, email, phone, photo);
+        if (validationMainInfoResult.IsFailure)
+        {
+            return validationMainInfoResult.Error;
+        }
+
+        var validationAdditionalInfoResult = User.CheckAdditionalInfo(education, description);
+        if (validationAdditionalInfoResult.IsFailure)
+        {
+            return validationAdditionalInfoResult.Error;
+        }
+
+        var validationPasswordResult = User.CheckPassword(password);
+        if (validationPasswordResult.IsFailure)
+        {
+            return validationPasswordResult.Error;
+        }
+
+        if (int.IsNegative(experience))
+        {
+            return Errors.Errors.General.ValueIsInvalid("experience");
+        }
+
         var teacher = new Teacher(
             fio,
             experience,

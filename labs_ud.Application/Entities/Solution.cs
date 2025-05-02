@@ -1,4 +1,6 @@
+using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
+using labs_ud.Application.Entities.Validation;
 using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
 
@@ -20,13 +22,36 @@ public class Solution
     public string Answer { get; set; }
     
     public static Result<Solution, Error> Create(
-        Guid taskId,
+        string taskId,
         int mark,
         string answer
     )
     {
+        var checkGuidResult = Ids.CheckGuid(taskId, "task id");
+        if (checkGuidResult.IsFailure)
+        {
+            return checkGuidResult.Error;
+        }
+
+        //получение мин макс оценки должно быть через запрос к answer
+        
+        if (int.IsNegative(mark))
+        {
+            return Errors.Errors.General.ValueIsInvalid("mark");
+        }
+        
+        if (string.IsNullOrWhiteSpace(answer))
+        {
+            return Errors.Errors.General.ValueIsRequired("answer");
+        }
+        
+        if (answer.Length > Constants.Values.HUGE_TEXT)
+        {
+            return Errors.Errors.General.InvalidLength("answer");
+        }
+        
         var solution = new Solution(
-            taskId,
+            Guid.Parse(taskId),
             mark,
             answer
         );

@@ -1,6 +1,6 @@
 namespace labs_ud.Application.Create;
 
 public record CreateSolutionRequest (
-    Guid TaskId,
+    string TaskId,
     int Mark,
     string Answer);

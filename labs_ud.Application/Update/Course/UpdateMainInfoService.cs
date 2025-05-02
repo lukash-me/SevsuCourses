@@ -25,11 +25,16 @@ public class UpdateMainInfoService
         if (courseResult.IsFailure)
             return courseResult.Error;
         
-        courseResult.Value.UpdateMainInfo(
+        var updateResult = courseResult.Value.UpdateMainInfo(
             request.Dto.Title,
             request.Dto.Description,
             request.Dto.Photo
         );
+
+        if (updateResult.IsFailure)
+        {
+            return updateResult.Error;
+        }
         
         await _unitOfWork.SaveChanges(cancellationToken);
 
