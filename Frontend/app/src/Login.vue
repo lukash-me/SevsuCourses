@@ -119,7 +119,10 @@ export default {
       }
 
       if (email.value == "-admin" && password.value == "-admin") {
-        Cookies.set("id", "admin", { expires: 1, path: "/" });
+
+        const id = await fetchData(endpoint, email.value, password.value);
+
+        Cookies.set("id", id, { expires: 1, path: "/" });
         Cookies.set("role", "admin", { expires: 1, path: "/" });
 
         window.location.href = router.resolve({ name: 'adminPage' }).href;
@@ -131,8 +134,6 @@ export default {
         Cookies.set("id", id, { expires: 1, path: "/" });
         Cookies.set("role", endpoint, { expires: 1, path: "/" });
         window.location.href = router.resolve({ name: 'coursesPage' }).href;
-
-
       } 
       else {
         alert('Ошибка входа. Проверьте данные.');

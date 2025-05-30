@@ -14,12 +14,16 @@ public class GetThemeByIdService
         _themeRepository = themeRepository;
     }
 
-
     public async Task<Result<ThemeResponse, Error>> Handle(ThemeId themeId, CancellationToken cancellationToken = default)
     {
         var themeResult = await _themeRepository.GetById(themeId, cancellationToken);
-        var theme = themeResult.Value;
+
+        if (themeResult.IsFailure)
+        {
+            return themeResult.Error;
+        }
         
+        var theme = themeResult.Value;
         
         var id = theme.Id;
         var courseId = theme.CourseId;

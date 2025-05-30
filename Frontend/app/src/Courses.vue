@@ -193,24 +193,18 @@ export default {
         },
 
         async updateCourseInfo(courseId, request) {
-            try {
-                const response = await fetch(`http://localhost:5036/Course/main-info/${courseId}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(request),
-                });
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
 
-                const result = await response.json();
-                console.log("Курс успешно обновлен:", result);
-            } 
-            catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
+            const response = await fetch(`http://localhost:5036/Course/main-info/${courseId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(request),
+            });
+
+            const result = await response.json();
+
+            return result;
         },
 
         async createCourse(request) {
@@ -238,7 +232,6 @@ export default {
                 }
 
                 const result = await response.json();
-                console.log("Курс успешно удален:", result);
 
                 return result;
             } 
@@ -303,7 +296,14 @@ export default {
                     description: this.form.description
                 }
 
-                await this.updateCourseInfo(this.form.courseId, request);
+                const result = await this.updateCourseInfo(this.form.courseId, request);
+
+                if (typeof result === "object" && "errors" in result) {
+                    console.log("Have Errors", result.errors);
+                    return
+                }
+                
+                console.log("Курс успешно изменен", result);
 
                 this.closeFormModal();
 
@@ -320,11 +320,12 @@ export default {
 
                 const result = await this.createCourse(request);
 
-                if ("errors" in result) {
-                    console.log(result);
-                    this.closeFormModal();
+                if (typeof result === "object" && "errors" in result) {
+                    console.log(result.errors);
                     return
                 }
+
+                console.log("Курс успешно добавлен:", result);
 
                 this.form.courseId = result;
 
@@ -404,16 +405,16 @@ export default {
         },
 
         async removeCourse() {
-            const response = await this.deleteCourse(this.form.courseId);
-            console.log(response)
+
+            const result = await this.deleteCourse(this.form.courseId);
+
+            console.log("Курс успешно удален:", result);
 
             this.closeDeleteModal();
 
             this.courseRows = this.courseRows.map(row =>
                 row.filter(course => course.id !== this.form.courseId)
             );
-
-            
         },
 
         openFormModal() {

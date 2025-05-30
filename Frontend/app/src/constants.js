@@ -1,0 +1,1 @@
+export const URL_IMG_THEME_CARD_DEFAULT = '/images/themes_01.jpg';

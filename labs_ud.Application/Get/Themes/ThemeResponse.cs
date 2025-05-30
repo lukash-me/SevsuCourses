@@ -5,7 +5,7 @@ public record ThemeResponse
     Guid Id,
     Guid CourseId,
     string Title,
-    string Text,
-    string Photo,
+    string? Text,
+    string? Photo,
     int Number
 );

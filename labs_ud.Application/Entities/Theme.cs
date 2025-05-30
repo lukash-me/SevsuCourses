@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using labs_ud.Application.Entities.Validation;
 using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
 
@@ -28,11 +29,23 @@ public class Theme
     public string? Photo { get; set; }
     public int Number { get; set; }
 
-    public void UpdateMainInfo(string title, string? text, string? photo)
+    public Result<string, Error> UpdateMainInfo(string title, string? text, string? photo)
     {
         Title = title;
         Text = text;
         Photo = photo;
+        
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Errors.Errors.General.ValueIsRequired("title");
+        }
+
+        if (title.Length > Constants.Values.MEDIUM_TEXT)
+        {
+            return Errors.Errors.General.InvalidLength("title");
+        }
+
+        return "Success";
     }
     
     public static Result<Theme, Error> Create(
@@ -43,6 +56,21 @@ public class Theme
         int number
     )
     {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Errors.Errors.General.ValueIsRequired("title");
+        }
+
+        if (title.Length > Constants.Values.MEDIUM_TEXT)
+        {
+            return Errors.Errors.General.InvalidLength("title");
+        }
+
+        if (int.IsNegative(number))
+        {
+            return Errors.Errors.General.ValueIsInvalid("number");
+        }
+        
         var theme = new Theme(
             courseId,
             title,

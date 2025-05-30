@@ -157,7 +157,9 @@ export default {
           studentAnswer.value = {"answerText": "Студент еще не предоставил ответ на этот вопрос"}
           throw new Error("Failed to fetch answer");
         }
-        studentAnswer.value = await response.json();
+
+        const data = await response.json();
+        studentAnswer.value = data;
 
       } catch (error) {
         console.error("Error fetching answer:", error);
@@ -293,12 +295,15 @@ export default {
 
     async getStudentsInfo(groupId){
       try {
-        const response = await fetch(`http://localhost:5036/Student/all-id-fio-status/${groupId}`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
+        const result = await fetch(`http://localhost:5036/Student/all-id-fio-status/${groupId}`);
+
+
+        if (typeof result === "object" && "errors" in result) {
+          console.log("Have Errors", result.errors);
+          return
         }
 
-        const data = await response.json();
+        const data = await result.json();
         return data;
 
       } 

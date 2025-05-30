@@ -226,7 +226,8 @@
     import { reactive, ref } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import Cookies from "js-cookie";
-
+    import { URL_IMG_THEME_CARD_DEFAULT } from '@/constants'
+ 
     export default {
             name: "ThemesPage",
         setup() {
@@ -234,7 +235,7 @@
             const themes = ref([]);
             const route = useRoute();
             const router = useRouter();
-            const themeImage = '/images/themes_01.jpg';
+            const themeImage = URL_IMG_THEME_CARD_DEFAULT;
             let isModalFormOpen = ref(false);
             let isModalDeleteInfoOpen = ref(false);
             let isModalFormTaskOpen = ref(false);
@@ -291,11 +292,15 @@
 
             async getCourseTitle(courseId) {
                 try {
-                    const response = await fetch(`http://localhost:5036/Course/title-teacher/${courseId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch course');
+                    const result = await fetch(`http://localhost:5036/Course/title-teacher/${courseId}`);
+
+                    const data = await result.json();
+
+                    if (typeof data === "object" && "errors" in data) {
+                        console.log("Have Errors", data.errors);
+                        return
                     }
-                    const data = await response.json();
+
                     this.courseTitle = data.title;
                 } catch (error) {
                     console.error('Error fetching course:', error);
@@ -304,11 +309,14 @@
 
             async getThemes(courseId) {
                 try {
-                    const response = await fetch(`http://localhost:5036/Theme/all/${courseId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch themes');
+                    const result = await fetch(`http://localhost:5036/Theme/all/${courseId}`);
+
+                    const data = await result.json();
+                    
+                    if (typeof data === "object" && "errors" in data) {
+                        console.log("Have Errors", data.errors);
+                        return
                     }
-                    const data = await response.json();
 
                     const enrichedThemes = await Promise.all(
                         data.map(async (theme) => {
@@ -324,27 +332,26 @@
             },
 
             async getTheme(themeId) {
-                try {
-                    const response = await fetch(`http://localhost:5036/Theme/${themeId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch themes');
-                    }
-                    const data = await response.json();
 
-                    return data
-                } 
-                catch (error) {
-                    console.error('Error fetching themes:', error);
-                }
+                const result = await fetch(`http://localhost:5036/Theme/${themeId}`);
+
+                const data = await result.json();
+
+                return data
             },
 
             async fetchTasks(themeId) {
                 try {
-                    const response = await fetch(`http://localhost:5036/Task/theme/${themeId}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch tasks');
+                    const result = await fetch(`http://localhost:5036/Task/theme/${themeId}`);
+
+                    const data = await result.json();
+
+                    if (typeof data === "object" && "errors" in data) {
+                        console.log("Have Errors", data.errors);
+                        return
                     }
-                    return await response.json();
+
+                    return data;
                 } 
                 catch (error) {
                     console.error('Error fetching tasks:', error);
@@ -363,26 +370,26 @@
                     return;
                 }
 
-                this.isModalFormOpen = true
+                this.form.image = URL_IMG_THEME_CARD_DEFAULT;
+                this.form.title = null;
+                this.form.description = null;
+
+                this.isModalFormOpen = true;
             },
 
             async createTheme(request) {
                 try {
-                    const response = await fetch(`http://localhost:5036/Theme/${this.$route.query.id}`, {
+                    const result = await fetch(`http://localhost:5036/Theme/${this.$route.query.id}`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify(request),
                     });
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
 
-                    const result = await response.json();
-                    console.log("Тема успешно создана:", result);
+                    const data = await result.json();
 
-                    return result;
+                    return data;
                 } 
                 catch (error) {
                     console.error('There was a problem with the fetch operation:', error);
@@ -390,43 +397,38 @@
             },
 
             async createTask(request) {
-                try {
-                    const response = await fetch(`http://localhost:5036/Task`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(request),
-                    });
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
 
-                    const result = await response.json();
-                    console.log("Задача успешно создана:", result);
+                const result = await fetch(`http://localhost:5036/Task`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(request),
+                });
+                
+                const data = await result.json();
 
-                    return result;
-                } 
-                catch (error) {
-                    console.error('There was a problem with the fetch operation:', error);
-                }
+                return data;
             },
 
             async updateTheme(themeId, request) {
                 try {
-                    const response = await fetch(`http://localhost:5036/Theme/main-info/${themeId}`, {
+                    const result = await fetch(`http://localhost:5036/Theme/main-info/${themeId}`, {
                         method: "PUT",
                         headers: {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify(request),
                     });
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
+
+                    const data = await result.json();
+
+                    if (typeof data === "object" && "errors" in data) {
+                        console.log("Have Errors", data.errors);
+                        return
                     }
 
-                    const result = await response.json();
-                    console.log("Тема успешно обновлена:", result);
+                    console.log("Тема успешно обновлена:", data);
                 } 
                 catch (error) {
                     console.error('There was a problem with the fetch operation:', error);
@@ -435,17 +437,20 @@
 
             async deleteTheme(themeId) {
                 try {
-                    const response = await fetch(`http://localhost:5036/Theme/${themeId}`, {
+                    const result = await fetch(`http://localhost:5036/Theme/${themeId}`, {
                         method: "DELETE"
                     });
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
+
+                    const data = await result.json();
+
+                    if (typeof data === "object" && "errors" in data) {
+                        console.log("Have Errors", data.errors);
+                        return
                     }
 
-                    const result = await response.json();
-                    console.log("Тема успешно удалена:", result);
+                    console.log("Тема успешно удалена:", data);
 
-                    return result;
+                    return data;
                 } 
                 catch (error) {
                     console.error('There was a problem with the fetch operation:', error);
@@ -454,17 +459,20 @@
 
             async deleteTask(taskId) {
                 try {
-                    const response = await fetch(`http://localhost:5036/Task/${taskId}`, {
+                    const result = await fetch(`http://localhost:5036/Task/${taskId}`, {
                         method: "DELETE"
                     });
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
+
+                    const data = await result.json();
+
+                    if (typeof data === "object" && "errors" in data) {
+                        console.log("Have Errors", data.errors);
+                        return
                     }
 
-                    const result = await response.json();
-                    console.log("Задача успешно удалена:", result);
+                    console.log("Задача успешно удалена:", data);
 
-                    return result;
+                    return data;
                 } 
                 catch (error) {
                     console.error('There was a problem with the fetch operation:', error);
@@ -480,8 +488,20 @@
                 }
 
                 if (this.form.themeId == null) {
-                    await this.createTheme(request)
+                    const result = await this.createTheme(request);
+
+                    if (typeof result === "object" && "errors" in result) {
+                        console.log("Have Errors", result.errors);
+                        return
+                    }
+
+                    console.log("Тема успешно создана:", result);
+
+                    request.id = result;
+
                     this.themes.push(request);
+
+                    console.log("themes:", this.themes);
                 }
                 else {
                     await this.updateTheme(this.form.themeId, request)
@@ -493,14 +513,14 @@
 
             async refresh() {
 
-                const data = await this.getTheme(this.form.themeId)
+                const data = await this.getTheme(this.form.themeId);
 
                 const updatedTheme = {
                     "id": this.form.themeId,
                     "title": data.title,
                     "image": data.photo,
                     "text": data.text
-                } 
+                }
 
                 this.themes = this.themes.map(theme =>
                     theme.id === this.form.themeId ? { ...theme, ...updatedTheme } : theme);
@@ -530,13 +550,19 @@
                 }
 
                 this.form.themeId = themeId;
+
+                const result = await this.getTheme(this.form.themeId);
+
+                if (typeof result === "object" && "errors" in result) {
+                    console.log("Have Errors", result.errors);
+                    return
+                }
+
+                this.form.title = result.title;
+                this.form.image = result.photo;
+                this.form.description = result.text;
+
                 this.isModalFormOpen = true;
-
-                const theme = await this.getTheme(this.form.themeId);
-
-                this.form.title = theme.title;
-                this.form.image = theme.photo;
-                this.form.description = theme.text;
             },
 
             toDeleteTheme(themeId) {
@@ -585,12 +611,21 @@
                     maxMark: this.formTask.maxMark
                 }
 
-                await this.createTask(request);
-                
+                console.log("request", request);
+
+                const result = await this.createTask(request);
+
+                if (typeof result === "object" && "errors" in result) {
+                    console.log("Have Errors", result.errors);
+                    return
+                }
+
+                console.log("Задача успешно создана:", result);
+
                 this.themes = this.themes.map(theme =>
                     theme.id === this.formTask.themeId ? { ...theme, tasks: [...theme.tasks, request] } : theme
                 );
-
+                
                 this.closeFormTask();
             },
 
