@@ -81,19 +81,19 @@ public class StudentGroupController : ControllerBase
     }
     
     /// <summary>
-    /// Получение id студентов, которые обучаются в группе по id группы
+    /// Получение id студентов, которые обучаются в группе/группах по id группы
     /// </summary>
     /// <param name="service"></param>
     /// <param name="groupId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpGet("students/{groupId:guid}")]
+    [HttpPost("students")]
     public async Task<ActionResult<Guid>> GetGroupId(
         [FromServices] GetStudentsByGroupIdService service,
-        [FromRoute] Guid groupId,
+        [FromBody] StudentsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var result = await service.Handle(groupId, cancellationToken);
+        var result = await service.Handle(request, cancellationToken);
 
         if (result.IsFailure)
             return result.Error.ToResponse();

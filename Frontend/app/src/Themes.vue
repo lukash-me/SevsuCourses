@@ -45,7 +45,7 @@
     </div>
 
     <div v-if="isModalFormOpen" class="overlay">
-        <form class="theme-edit-form" @submit.prevent="handleSubmit" novalidate>
+        <formTheme class="theme-edit-formTheme" @submit.prevent="handleSubmit" novalidate>
             
             <h1>Тема</h1>
             
@@ -54,7 +54,7 @@
                 <span>Изображение</span>
                 <input 
                 id="image"
-                v-model="form.image"
+                v-model="formTheme.image"
                 type="text"
                 class="box"
                 placeholder="Укажите название изображения.."
@@ -68,7 +68,7 @@
                 <span>Название*</span>
                 <input
                 id="title"
-                v-model="form.title"
+                v-model="formTheme.title"
                 type="text" 
                 class="box"
                 placeholder="Введите название.."
@@ -83,7 +83,7 @@
                 <span>Основной текст</span>
                 <textarea
                 id="description"
-                v-model="form.description"
+                v-model="formTheme.description"
                 type="text" 
                 class="box"
                 placeholder="Текст темы.."
@@ -96,7 +96,7 @@
                 <button class="cancel-btn" @click="closeForm">Отменить</button>
                 <button class="save-btn" @click="saveTheme">Сохранить</button>
             </div>
-        </form>
+        </formTheme>
     </div>
 
     <div v-if="isModalDeleteInfoOpen" class="overlay">
@@ -128,7 +128,7 @@
     <button class="add-theme-btn" @click="toCreateTheme">Добавить тему</button>
 
     <div v-if="isModalFormTaskOpen" class="overlay">
-        <form class="task-edit-form" @submit.prevent="handleSubmit" novalidate>
+        <formTheme class="task-edit-formTheme" @submit.prevent="handleSubmit" novalidate>
             
             <h1>Задача</h1>
             
@@ -218,7 +218,7 @@
                 <button class="cancel-btn" @click="closeFormTask">Отменить</button>
                 <button class="save-btn" @click="saveTask">Сохранить</button>
             </div>
-        </form>
+        </formTheme>
     </div>
 
 </template>
@@ -226,8 +226,12 @@
 <script>
     import { reactive, ref } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
-    import Cookies from "js-cookie";
     import { URL_IMG_THEME_CARD_DEFAULT } from '@/constants'
+    import { logResultIfFailure, getRole } from '@/utils/shared/shared';
+
+    import { getCourseTitleAndTeacher } from '@/utils/requests/courses';
+    import { getAllThemes, getTheme, updateTheme, createTheme, deleteTheme } from '@/utils/requests/themes';
+    import { getTasksByTheme, createTask, deleteTask } from '@/utils/requests/tasks';
  
     export default {
             name: "ThemesPage",
@@ -237,6 +241,7 @@
             const route = useRoute();
             const router = useRouter();
             const themeImage = URL_IMG_THEME_CARD_DEFAULT;
+
             let isModalFormOpen = ref(false);
             let isModalDeleteInfoOpen = ref(false);
             let isModalFormTaskOpen = ref(false);
@@ -252,7 +257,7 @@
                 haveNoRightsModal.value = false;
             }
 
-            const form = reactive({
+            const formTheme = reactive({
                 themeId: null,
                 image: null,
                 title: null,
@@ -270,14 +275,22 @@
                 maxMark: null
             })
 
-            return { haveNoRightsModal, openNoRightsModal, closeNoRightsModal, courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, isModalDeleteTaskInfoOpen, form, formTask};
+            return { haveNoRightsModal, openNoRightsModal, closeNoRightsModal, courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, isModalDeleteTaskInfoOpen, formTheme, formTask};
         },
 
         async mounted() {
 
             const courseId = this.$route.query.id;
                 if (courseId) {
-                    await this.getCourseTitle(courseId);
+
+                    const courseTitleAndTeacherResult = await getCourseTitleAndTeacher(courseId);
+
+                    if (logResultIfFailure(courseTitleAndTeacherResult)){
+                        return;
+                    }
+
+                    this.courseTitle = courseTitleAndTeacherResult.title;
+
                     await this.getThemes(courseId);
                 } 
                 else {
@@ -287,213 +300,78 @@
 
         methods: {
 
-            getRole() {
-                return Cookies.get("role");
-            },
+            async addTasksToThemes(themes) {
 
-            async getCourseTitle(courseId) {
-                try {
-                    const result = await fetch(`http://localhost:5036/Course/title-teacher/${courseId}`);
+                let result = [];
 
-                    const data = await result.json();
+                for (let i=0; i<themes.length; i++) {
 
-                    if (typeof data === "object" && "errors" in data) {
-                        console.log("Have Errors", data.errors);
-                        return
+                    const tasksResult = await getTasksByTheme(themes[i].id);
+
+                    if (logResultIfFailure(tasksResult)) {
+                        return;
                     }
 
-                    this.courseTitle = data.title;
-                } catch (error) {
-                    console.error('Error fetching course:', error);
+                    const theme = {
+                        ...themes[i],
+                        tasks: tasksResult
+                    }
+
+                    result.push(theme);
                 }
+
+                return result;
             },
 
             async getThemes(courseId) {
-                try {
-                    const result = await fetch(`http://localhost:5036/Theme/all/${courseId}`);
 
-                    const data = await result.json();
-                    
-                    if (typeof data === "object" && "errors" in data) {
-                        console.log("Have Errors", data.errors);
-                        return
-                    }
+                const themesResult = await getAllThemes(courseId);
 
-                    const enrichedThemes = await Promise.all(
-                        data.map(async (theme) => {
-                            const tasks = await this.fetchTasks(theme.id);
-                            return { ...theme, tasks };
-                        })
-                    );
-                    this.themes = enrichedThemes.sort((a, b) => a.number - b.number);
-                } 
-                catch (error) {
-                    console.error('Error fetching themes:', error);
+                if (logResultIfFailure(themesResult)) {
+                    return;
                 }
-            },
-
-            async getTheme(themeId) {
-
-                const result = await fetch(`http://localhost:5036/Theme/${themeId}`);
-
-                const data = await result.json();
-
-                return data
-            },
-
-            async fetchTasks(themeId) {
-                try {
-                    const result = await fetch(`http://localhost:5036/Task/theme/${themeId}`);
-
-                    const data = await result.json();
-
-                    if (typeof data === "object" && "errors" in data) {
-                        console.log("Have Errors", data.errors);
-                        return
-                    }
-
-                    return data;
-                } 
-                catch (error) {
-                    console.error('Error fetching tasks:', error);
-                    return [];
-                }
+                
+                const themes = await this.addTasksToThemes(themesResult);
+                this.themes = themes.sort((a, b) => a.number - b.number);
             },
 
             goToTask(taskId) {
-                this.router.push({ name: 'taskPage', query: { id: taskId } });
+                this.router.push({ 
+                    name: 'taskPage', 
+                    query: { id: taskId } 
+                });
             },
 
             toCreateTheme() {
 
-                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                if (getRole() != "Teacher" && getRole() != "Admin"){
                     this.openNoRightsModal();
                     return;
                 }
 
-                this.form.image = URL_IMG_THEME_CARD_DEFAULT;
-                this.form.title = null;
-                this.form.description = null;
+                this.formTheme.image = URL_IMG_THEME_CARD_DEFAULT;
+                this.formTheme.title = null;
+                this.formTheme.description = null;
 
                 this.isModalFormOpen = true;
-            },
-
-            async createTheme(request) {
-                try {
-                    const result = await fetch(`http://localhost:5036/Theme/${this.$route.query.id}`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(request),
-                    });
-
-                    const data = await result.json();
-
-                    return data;
-                } 
-                catch (error) {
-                    console.error('There was a problem with the fetch operation:', error);
-                }
-            },
-
-            async createTask(request) {
-
-                const result = await fetch(`http://localhost:5036/Task`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(request),
-                });
-                
-                const data = await result.json();
-
-                return data;
-            },
-
-            async updateTheme(themeId, request) {
-                try {
-                    const result = await fetch(`http://localhost:5036/Theme/main-info/${themeId}`, {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(request),
-                    });
-
-                    const data = await result.json();
-
-                    if (typeof data === "object" && "errors" in data) {
-                        console.log("Have Errors", data.errors);
-                        return
-                    }
-
-                    console.log("Тема успешно обновлена:", data);
-                } 
-                catch (error) {
-                    console.error('There was a problem with the fetch operation:', error);
-                }
-            },
-
-            async deleteTheme(themeId) {
-                try {
-                    const result = await fetch(`http://localhost:5036/Theme/${themeId}`, {
-                        method: "DELETE"
-                    });
-
-                    const data = await result.json();
-
-                    if (typeof data === "object" && "errors" in data) {
-                        console.log("Have Errors", data.errors);
-                        return
-                    }
-
-                    console.log("Тема успешно удалена:", data);
-
-                    return data;
-                } 
-                catch (error) {
-                    console.error('There was a problem with the fetch operation:', error);
-                }
-            },
-
-            async deleteTask(taskId) {
-                try {
-                    const result = await fetch(`http://localhost:5036/Task/${taskId}`, {
-                        method: "DELETE"
-                    });
-
-                    const data = await result.json();
-
-                    if (typeof data === "object" && "errors" in data) {
-                        console.log("Have Errors", data.errors);
-                        return
-                    }
-
-                    console.log("Задача успешно удалена:", data);
-
-                    return data;
-                } 
-                catch (error) {
-                    console.error('There was a problem with the fetch operation:', error);
-                }
             },
 
             async saveTheme(){
 
                 const request = {
-                    photo: this.form.image,
-                    title: this.form.title,
-                    text: this.form.description
+                    photo: this.formTheme.image,
+                    title: this.formTheme.title,
+                    text: this.formTheme.description
                 }
 
-                if (this.form.themeId == null) {
-                    const result = await this.createTheme(request);
+                const themeId = this.formTheme.themeId;
 
-                    if (typeof result === "object" && "errors" in result) {
-                        console.log("Have Errors", result.errors);
-                        return
+                if (themeId == null) {
+
+                    const result = await createTheme(request);
+                    
+                    if (logResultIfFailure(result)) {
+                        return;
                     }
 
                     console.log("Тема успешно создана:", result);
@@ -501,11 +379,16 @@
                     request.id = result;
 
                     this.themes.push(request);
-
-                    console.log("themes:", this.themes);
                 }
                 else {
-                    await this.updateTheme(this.form.themeId, request)
+                    const result = await updateTheme(themeId, request);
+
+                    if (logResultIfFailure(result)) {
+                        return;
+                    }
+
+                    console.log("Тема успешно обновлена:", result);
+
                     await this.refresh(request);
                 }
 
@@ -514,21 +397,26 @@
 
             async refresh() {
 
-                const data = await this.getTheme(this.form.themeId);
+                const themeId = this.formTheme.themeId;
+                const themeResult = await getTheme(themeId);
+
+                if (logResultIfFailure(themeResult)) {
+                    return;
+                }
 
                 const updatedTheme = {
-                    "id": this.form.themeId,
-                    "title": data.title,
-                    "image": data.photo,
-                    "text": data.text
+                    "id": themeId,
+                    "title": themeResult.title,
+                    "image": themeResult.photo,
+                    "text": themeResult.text
                 }
 
                 this.themes = this.themes.map(theme =>
-                    theme.id === this.form.themeId ? { ...theme, ...updatedTheme } : theme);
+                    theme.id === this.formTheme.themeId ? { ...theme, ...updatedTheme } : theme);
             },
 
             closeForm() {
-                this.form.themeId = null;
+                this.formTheme.themeId = null;
                 this.isModalFormOpen = false;
             },
 
@@ -545,54 +433,60 @@
 
             async toEditTheme(themeId) {
 
-                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                if (getRole() != "Teacher" && getRole() != "admin"){
                     this.openNoRightsModal();
                     return;
                 }
 
-                this.form.themeId = themeId;
-
-                const result = await this.getTheme(this.form.themeId);
+                this.formTheme.themeId = themeId;
+                const result = await getTheme(themeId);
 
                 if (typeof result === "object" && "errors" in result) {
                     console.log("Have Errors", result.errors);
                     return
                 }
 
-                this.form.title = result.title;
-                this.form.image = result.photo;
-                this.form.description = result.text;
+                this.formTheme.title = result.title;
+                this.formTheme.image = result.photo;
+                this.formTheme.description = result.text;
 
                 this.isModalFormOpen = true;
             },
 
             toDeleteTheme(themeId) {
 
-                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                if (getRole() != "Teacher" && getRole() != "Admin"){
                     this.openNoRightsModal();
                     return;
                 }
 
-                this.form.themeId = themeId;
+                this.formTheme.themeId = themeId;
                 this.isModalDeleteInfoOpen = true;
             },
 
             closeDeleteModal() {
-                this.form.themeId = null;
+                this.formTheme.themeId = null;
                 this.isModalDeleteInfoOpen = false;
             },
 
             async removeTheme() {
-                await this.deleteTheme(this.form.themeId);
 
-                this.themes = this.themes.filter(theme => theme.id !== this.form.themeId);
+                const result = await deleteTheme(this.formTheme.themeId);
+
+                if (logResultIfFailure(result)) {
+                    return;
+                }
+
+                console.log("Тема успешно удалена:", result);
+
+                this.themes = this.themes.filter(theme => theme.id !== this.formTheme.themeId);
 
                 this.closeDeleteModal()
             },
 
             toCreateTask(themeId) {
 
-                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                if (getRole() != "Teacher" && getRole() != "admin"){
                     this.openNoRightsModal();
                     return;
                 }
@@ -612,13 +506,10 @@
                     maxMark: this.formTask.maxMark
                 }
 
-                console.log("request", request);
+                const result = await createTask(request);
 
-                const result = await this.createTask(request);
-
-                if (typeof result === "object" && "errors" in result) {
-                    console.log("Have Errors", result.errors);
-                    return
+                if (logResultIfFailure(result)) {
+                    return;
                 }
 
                 console.log("Задача успешно создана:", result);
@@ -634,7 +525,7 @@
 
                 event.stopPropagation(event);
 
-                if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+                if (getRole() != "Teacher" && getRole() != "admin"){
                     this.openNoRightsModal();
                     return;
                 }
@@ -644,11 +535,20 @@
             },
 
             async removeTask() {
-                await this.deleteTask(this.formTask.taskId);
+
+                const taskId = this.formTask.taskId;
+
+                const result = await deleteTask(taskId);
+
+                if (logResultIfFailure(result)) {
+                    return;
+                }
+
+                console.log("Задача успешно удалена:", result);
 
                 this.themes = this.themes.map(theme => ({
                     ...theme,
-                    tasks: theme.tasks.filter(task => task.id !== this.formTask.taskId)
+                    tasks: theme.tasks.filter(task => task.id !== taskId)
                 }));
 
                 this.closeDeleteTaskModal()

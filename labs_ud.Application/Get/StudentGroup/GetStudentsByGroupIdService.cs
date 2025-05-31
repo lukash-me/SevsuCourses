@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using labs_ud.Application.Entities.Validation;
 using labs_ud.Application.Errors;
 using labs_ud.Application.IDs;
 using labs_ud.Application.Repositories;
@@ -14,23 +15,48 @@ public class GetStudentsByGroupIdService
         _studentGroupRepository = studentGroupRepository;
     }
     
-    public async Task<Result<List<Guid>, Error>> Handle(GroupId groupId, CancellationToken cancellationToken = default)
+    public async Task<Result<List<Guid>, Error>> Handle(StudentsRequest request, CancellationToken cancellationToken = default)
     {
-        var studentGroupsResult = await _studentGroupRepository.GetByGroupId(groupId, cancellationToken);
-
-        if (studentGroupsResult.IsFailure)
+        if (request.groupIds.Count == 0)
         {
-            return studentGroupsResult.Error;
+            return Errors.Errors.General.ValueIsRequired("group id");
+        }
+
+        var groups = request.groupIds;
+        var studentGroupsAllGroups = new List<List<Entities.StudentGroup>>();
+
+        foreach (var group in groups)
+        {
+            var validationResult = Ids.CheckGuid(group, "group id");
+            if (validationResult.IsFailure)
+            {
+                return validationResult.Error;
+            }
+            
+            var studentGroupsResult = await _studentGroupRepository.GetByGroupId(Guid.Parse(group), cancellationToken);
+
+            if (studentGroupsResult.IsFailure)
+            {
+                return studentGroupsResult.Error;
+            }
+            studentGroupsAllGroups.Add(studentGroupsResult.Value);
         }
         
-        var studentGroups = studentGroupsResult.Value;
         var response = new List<Guid>();
         
-        foreach (var studentGroup in studentGroups)
+        foreach (var studentGroups in studentGroupsAllGroups)
         {
-            response.Add(studentGroup.StudentId);
+            foreach (var studentGroup in studentGroups)
+            {
+                response.Add(studentGroup.StudentId);
+            }
         }
 
         return response;
     }
 }
+
+public record StudentsRequest(
+    List<string> groupIds);
+
+

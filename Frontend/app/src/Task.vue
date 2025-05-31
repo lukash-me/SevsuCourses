@@ -106,7 +106,7 @@
                 
                 <div class="btns-form-container">
                   <button class="cancel-btn" @click="closeMarkModal"> Вернуться</button>
-                  <button class="save-btn" @click="toSendReply">Отправить</button>
+                  <button class="save-btn" @click="sendReply">Отправить</button>
                 </div>
               </form>
             </div>
@@ -117,8 +117,15 @@
 <script>
 import { ref, reactive, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import Cookies from "js-cookie";
 import { STUDENT_ANSWER_NOT_FOUND, MENTOR_REPLY_NOT_FOUND } from '@/constants'
+import { getAnswer, createAnswer, createReply } from '@/utils/requests/answers';
+import { getTheme } from '@/utils/requests/themes';
+import { getTask } from '@/utils/requests/tasks';
+import { getStudentsInfo } from '@/utils/requests/students';
+import { getSolution } from '@/utils/requests/solutions';
+
+import { getRole, getId, logResultIfFailure } from '@/utils/shared/shared';
+import { getAllGroupsOnCourse, getMentorGroupsOnCourse } from "@/utils/requests/groups";
 
 export default {
   name: "TaskPage",
@@ -148,45 +155,26 @@ export default {
 
     const goToThemes = async () => {
 
-      const result = await getTheme();
+      const taskId = route.query.id;
+      const taskResult = await getTask(taskId);
 
-      if(logResultIfFailure(result)) {
+      if (logResultIfFailure(taskResult)) {
+        return;
+      }
+
+      const themeId = taskResult.themeId;
+
+      const result = await getTheme(themeId);
+
+      if (logResultIfFailure(result)) {
         return;
       }
 
       router.push({ 
         name: "themesPage", 
-        query: {id: result.courseId} 
+        query: { id: result.courseId }
       });
     };
-
-    async function getTheme() {
-      try {
-        const response = await fetch(
-          `http://localhost:5036/Theme/${task.value.themeId}`
-        );
-
-        const result = await response.json();
-        return result;
-
-      } catch (error) {
-        console.error("Problem with server:", error);
-      }
-    }
-
-    async function fetchAnswer(taskId, studentId) {
-      try {
-        const response = await fetch(
-          `http://localhost:5036/Answer/last/taskId=${taskId}&studentId=${studentId}`
-        );
-
-        const result = await response.json();
-        return result;
-
-      } catch (error) {
-        console.error("Problem with server:", error);
-      }
-    }
 
     watch(activeStudent, async (newStudent) => {
 
@@ -194,7 +182,8 @@ export default {
 
       if (newStudent) {
 
-        const result = await fetchAnswer(taskId, newStudent.id);
+        const studentId = newStudent.id;
+        const result = await getAnswer(taskId, studentId);
 
         if (logResultIfFailure(result)) {
 
@@ -229,16 +218,6 @@ export default {
       haveNoRightsModal.value = true;
     }
 
-    function logResultIfFailure(result) {
-      if (typeof result === "object" && "errors" in result) {
-          console.log("Have Errors", result.errors);
-          return true;
-      }
-      else {
-        return false;
-      }
-    }
-
     return {
       task,
       form,
@@ -251,7 +230,6 @@ export default {
       isMarkModalOpen,
       activeStudent,
       goToThemes,
-      fetchAnswer,
       haveNoRightsModal,
       closeNoRightsModal,
       openNoRightsModal,
@@ -259,97 +237,144 @@ export default {
   },
 
   async mounted(){
-    const taskId = this.$route.query.id;
 
-    const taskResult = await this.fetchTask(taskId);
+    const taskId = this.$route.query.id
+    const taskResult = await getTask(taskId);
 
-    if (this.logResultIfFailure(taskResult)) {
+    if (logResultIfFailure(taskResult)) {
       return;
     }
 
+    const themeId = taskResult.themeId;
     this.task = taskResult;
 
-    const themeResult = await this.fetchThemeData(this.task.themeId);
+    const themeResult = await getTheme(themeId);
 
-    if (this.logResultIfFailure(themeResult)) {
+    if (logResultIfFailure(themeResult)) {
       return;
     }
 
     const theme = themeResult;
+    const courseId = theme.courseId;
 
     if (taskId) {
 
-        this.themeData = { title: theme.title, number: theme.number };
+      this.themeData = { title: theme.title, number: theme.number };
 
-        if (this.getRole() === "Student"){
+      if (getRole() === "Student"){
 
-          const studentId = this.getId();
-          const result = await this.getStudentMainInfo(studentId);
+        const studentId = getId();
+        const result = await this.getStudentMainInfo(studentId);
 
-          if (this.logResultIfFailure(result)) {
-            return;
-          }
-
-          const studentName = result.fio;
-
-          this.activeStudent = { id: studentId, fio: studentName};
-          this.students = [{ id: studentId, fio: studentName}];
-
-          await this.fetchAnswer(taskId, this.activeStudent.id);
+        if (logResultIfFailure(result)) {
+          return;
         }
 
-        else if (this.getRole() === "Mentor") {
+        const studentName = result.fio;
 
-          const mentorId = this.getId();
+        this.activeStudent = { id: studentId, fio: studentName };
+        this.students = [{ id: studentId, fio: studentName }];
 
-          const result = await this.getMentorCourseGroups(mentorId, theme.courseId);
+        await getAnswer(taskId, this.activeStudent.id);
+        // TODO: обработка ошибки обработки ответа
+        return;
+      }
 
-          if (this.logResultIfFailure(result)) {
-            return;
-          }
+      if (getRole() === "Mentor") {
 
-          let studentsData = [];
+        const mentorId = getId();
 
-          for (const groupId of result.groupIds) {
-            const studentsResult = await this.getStudentsInfo(groupId);
+        let students = await this.getStudents(courseId, mentorId);
+        students = this.dropAttestFromStudents(students);
 
-            if (this.logResultIfFailure(studentsResult)) {
-              return;
-            }
+        this.setStudents(students);
 
-            for (const student of studentsResult){
-              studentsData.push(student);
-            }
-          }
-          
-          const students = studentsData.map(({ isAttest, ...rest }) => rest); // eslint-disable-line no-unused-vars
+        return;
+      }
 
-          this.students = students;
+      if (getRole() === "Teacher" || getRole() === "Admin") {
 
-          this.activeStudent = this.students[0];
-        }
+        let students = await this.getStudents(courseId);
+        students = this.dropAttestFromStudents(students);
+        
+        this.setStudents(students);
+
+        return;
+      }
     } 
-      else {
-          console.error('No task ID provided');
-    }
   },
 
   methods: {
 
-    logResultIfFailure(result) {
+    setStudents(students) {
+      this.students = students;
+      this.activeStudent = this.students[0];
+    },
 
-      if (typeof result === "object" && "errors" in result) {
-          console.log("Have Errors", result.errors);
-          return true;
+    async getStudents(courseId, mentorId=null) {
+
+      let groupsResult;
+
+      if (mentorId===null) {
+        groupsResult = await getAllGroupsOnCourse(courseId);
       }
-      else {
-        return false;
+
+      if (mentorId) {
+        groupsResult = await getMentorGroupsOnCourse(mentorId, courseId);
       }
+
+      if (logResultIfFailure(groupsResult)) {
+        return;
+      }
+
+      const groupIds = groupsResult.groupIds;
+
+      const result = await this.getStudentsFromGroups(groupIds);
+      return result;
+    },
+
+    dropAttestFromStudents(students) {
+
+      const result = students.map(student => {
+        // eslint-disable-next-line no-unused-vars
+        const { isAttest, ...rest } = student; 
+        return rest;
+      });
+
+      return result;
+    },
+
+    async getStudentsFromGroups(groupIds) {
+
+      let students = [];
+
+      for (const id of groupIds) {
+
+        const request = {
+          groupIds: [id]
+        }
+
+        const studentsResult = await getStudentsInfo(request);
+
+        if (logResultIfFailure(studentsResult)) {
+          return;
+        }
+
+        for (const student of studentsResult){
+          students.push(student);
+        }
+      }
+
+      return students;
+    },
+
+    setStudentsWithAnswers() {
+
     },
 
     openAnswerModal() {
 
-      if (Cookies.get("role") != "Student" && Cookies.get("role") != "admin"){
+      if (getRole() != "Student" && getRole() != "Admin"){
         this.openNoRightsModal();
         return
       }
@@ -363,7 +388,7 @@ export default {
 
     async openMarkModal() {
 
-      if (Cookies.get("role") != "Mentor" & Cookies.get("role") != "admin"){
+      if (getRole() != "Mentor" & getRole() != "Admin"){
         this.openNoRightsModal();
         return
       }
@@ -377,7 +402,13 @@ export default {
 
       const taskId = this.$route.query.id;
 
-      const solution = await this.getSolution(taskId);
+      const solutionResult = await getSolution(taskId);
+
+      if (logResultIfFailure(solutionResult)) {
+        return
+      }
+
+      const solution = solutionResult[0];
 
       this.formMark.solutionText = solution;
       this.formMark.mark = this.studentAnswer.mark;
@@ -388,126 +419,36 @@ export default {
       this.isMarkModalOpen = false;
     },
 
-    getId() {
-      return Cookies.get("id");
-    },
-
-    getRole() {
-      return Cookies.get("role");
-    },
-
-    async getStudentsInfo(groupId){
-      try {
-        const response = await fetch(`http://localhost:5036/Student/all-id-fio-status/${groupId}`);
-
-        const result = await response.json();
-        return result;
-      } 
-      catch (error) {
-        console.error('Problem with server:', error);
-      }
-    },
-
-    async getMentorCourseGroups(mentorId, courseId) {
-
-        const response = await fetch(`http://localhost:5036/Group/${mentorId}&${courseId}`);
-
-        const result = await response.json();
-        return result;
-    },
-
-    async getStudentMainInfo(studentId) {
-
-      try {
-        const response = await fetch(`http://localhost:5036/Student/main-info/${studentId}`);
-
-        const result = await response.json();
-        return result;
-      } 
-      catch (error) {
-        console.error("Problem with server:", error);
-      }
-    },
-
-    async fetchTask(taskId) {
-      try {
-        const response = await fetch(`http://localhost:5036/Task/${taskId}`);
-        const result = await response.json();
-
-        return result;
-      } 
-      catch (error) {
-        console.error("Problem with server:", error);
-      }
-    },
-
-    async fetchThemeData(themeId) {
-
-      try {
-        const response = await fetch(`http://localhost:5036/Theme/${themeId}`);
-        const result = await response.json();
-
-        return result
-        
-      } catch (error) {
-        console.error("Problem with server:", error);
-      }
-    },
-
-    async getSolution(taskId) {
-      try {
-        const response = await fetch(`http://localhost:5036/Solution/answer/${taskId}`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-
-        const data = await response.json();
-        return data[0];
-
-      } 
-      catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
-      }
-    },
-
     async sendAnswer() {
 
       const request = {
         taskId: this.$route.query.id,
-        studentId: this.getId(),
+        studentId: getId(),
         answerText: this.form.answerText
       }
 
-      try {
-          const response = await fetch(
-              `http://localhost:5036/Answer`,
-              {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(request),
-              }
-          );
-          if (!response.ok) throw new Error("Failed to send answer");
+      const result = await createAnswer();
 
-          this.studentAnswer.answerText = request.answerText;
-
-          this.closeAnswerModal();
-      } 
-      catch (error) {
-          console.error("Error sending answer:", error);
+      if (logResultIfFailure(result)) { 
+        return;
       }
+
+      this.studentAnswer.answerText = request.answerText;
+      this.closeAnswerModal();
     },
 
-    async toSendReply() {
+    async sendReply() {
 
       const request = {
         replyText: this.formMark.replyText,
         mark: this.formMark.mark
       }
 
-      const result = await this.sendReply(request);
+      const answerId = this.studentAnswer.id;
 
-      if (this.logResultIfFailure(result)) {
+      const result = await createReply(answerId, request);
+
+      if (logResultIfFailure(result)) {
         return;
       }
 
@@ -518,27 +459,6 @@ export default {
       this.studentAnswer.replyText = request.replyText;
       this.studentAnswer.mark = request.mark;
     },
-
-    async sendReply(request){
-
-      try {
-          const response = await fetch(
-              `http://localhost:5036/Answer/${this.studentAnswer.id}/reply-mark`,
-              {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(request),
-              }
-          );
-
-          const result = await response.json();
-
-          return result;
-      } 
-      catch (error) {
-          console.error("Problem with server:", error);
-      }
-    }
   }
 };
 </script>

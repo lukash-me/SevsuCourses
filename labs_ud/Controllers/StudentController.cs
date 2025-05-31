@@ -54,17 +54,17 @@ public class StudentController : ControllerBase
     /// </summary>
     /// <param name="infoService"></param>
     /// <param name="allStudentsService"></param>
-    /// <param name="groupId"></param>
+    /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    [HttpGet("all-id-fio-status/{groupId:guid}")]
+    [HttpPost("all-id-fio-status")]
     public async Task<ActionResult<Guid>> GetGroupId(
         [FromServices] GetStudentsFioStatusByStudentIdService infoService,
         [FromServices] GetStudentsByGroupIdService allStudentsService,
-        [FromRoute] Guid groupId,
+        [FromBody] StudentsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var studentsResult = await allStudentsService.Handle(groupId, cancellationToken);
+        var studentsResult = await allStudentsService.Handle(request, cancellationToken);
         
         if (studentsResult.IsFailure)
             return studentsResult.Error.ToResponse();
