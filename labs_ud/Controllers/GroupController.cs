@@ -73,6 +73,27 @@ public class GroupController : ControllerBase
     }
     
     /// <summary>
+    /// Получить id всех групп на курсе
+    /// </summary>
+    /// <param name="courseId"></param>
+    /// <param name="service"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    [HttpGet("course/{courseId:guid}")]
+    public async Task<ActionResult<Guid>> GetByCourseId(
+        [FromRoute] Guid courseId,
+        [FromServices] GetGroupsByCourseId service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(courseId, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
+    /// <summary>
     /// Изменить ментора для группы по id группы и id ментора
     /// </summary>
     /// <param name="groupId"></param>
@@ -113,3 +134,4 @@ public class GroupController : ControllerBase
         return Ok(result.Value);
     }
 }
+

@@ -442,11 +442,13 @@ export default {
 
 .container {
     display: flex;
-    flex-wrap: wrap;
-    margin-top: 10rem;
+    
     width: 90%;
-    justify-self: center;
     gap: 10px;
+    flex-wrap: wrap;
+
+    margin: 0 auto;
+    margin-top: 10rem;
 }
 
 .btns-container {

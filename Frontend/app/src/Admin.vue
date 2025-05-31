@@ -591,11 +591,10 @@
     }
 
     .container {
+        margin: 0 auto;
         margin-top: 80px;
         display: flex;
         flex-direction: column;
-
-        justify-self: center;
 
         width: 90%;
         min-height: 100vh;

@@ -44,6 +44,7 @@ public class Answer
     {
         ReplyText = newReply;
         Mark = newMark;
+        DateReplied = DateTime.UtcNow;
     } 
     
     public static Result<Answer, Error> Create(

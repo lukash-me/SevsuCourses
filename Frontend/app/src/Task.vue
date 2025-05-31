@@ -52,14 +52,14 @@
 
             <div class="container">
             <h2>Ответ ментора</h2>
-            <span>{{ studentAnswer.replyText ? studentAnswer.replyText : "Ментор пока не оценил ответ" }}</span>
+            <span>{{ studentAnswer.replyText ? studentAnswer.replyText : MENTOR_REPLY_NOT_FOUND }}</span>
             </div>
 
             <div class="btns-container">
               <button class="btn" @click="goToThemes">Вернуться к темам</button>
             </div>
 
-            <!-- Модальное окно ответа -->
+            <!-- Модальное окно ответа студента -->
             <div v-if="showAnswerModal" class="overlay">
               <form class="answer-send-form" @submit.prevent="handleSubmit" novalidate>
 
@@ -79,6 +79,7 @@
               </form>
             </div>
 
+            <!-- Модальное окно ответа ментора -->
             <div v-if="isMarkModalOpen" class="overlay">
               <form class="reply-send-form" @submit.prevent="handleSubmit" novalidate>
                 <h1>Оценивание ответа студента</h1>
@@ -105,7 +106,7 @@
                 
                 <div class="btns-form-container">
                   <button class="cancel-btn" @click="closeMarkModal"> Вернуться</button>
-                  <button class="save-btn" @click="sendReply">Отправить</button>
+                  <button class="save-btn" @click="toSendReply">Отправить</button>
                 </div>
               </form>
             </div>
@@ -117,6 +118,7 @@
 import { ref, reactive, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Cookies from "js-cookie";
+import { STUDENT_ANSWER_NOT_FOUND, MENTOR_REPLY_NOT_FOUND } from '@/constants'
 
 export default {
   name: "TaskPage",
@@ -144,25 +146,45 @@ export default {
       mark: 0
     });
 
-    const goToThemes = () => {
-      router.push({ name: "themesPage" });
+    const goToThemes = async () => {
+
+      const result = await getTheme();
+
+      if(logResultIfFailure(result)) {
+        return;
+      }
+
+      router.push({ 
+        name: "themesPage", 
+        query: {id: result.courseId} 
+      });
     };
+
+    async function getTheme() {
+      try {
+        const response = await fetch(
+          `http://localhost:5036/Theme/${task.value.themeId}`
+        );
+
+        const result = await response.json();
+        return result;
+
+      } catch (error) {
+        console.error("Problem with server:", error);
+      }
+    }
 
     async function fetchAnswer(taskId, studentId) {
       try {
         const response = await fetch(
           `http://localhost:5036/Answer/last/taskId=${taskId}&studentId=${studentId}`
         );
-        if (!response.ok) {
-          studentAnswer.value = {"answerText": "Студент еще не предоставил ответ на этот вопрос"}
-          throw new Error("Failed to fetch answer");
-        }
 
-        const data = await response.json();
-        studentAnswer.value = data;
+        const result = await response.json();
+        return result;
 
       } catch (error) {
-        console.error("Error fetching answer:", error);
+        console.error("Problem with server:", error);
       }
     }
 
@@ -171,7 +193,31 @@ export default {
       const taskId = route.query.id;
 
       if (newStudent) {
-        await fetchAnswer(taskId, newStudent.id);
+
+        const result = await fetchAnswer(taskId, newStudent.id);
+
+        if (logResultIfFailure(result)) {
+
+          if (result.errors[0].code!="record.not.found") {
+            return
+          }
+        }
+
+        studentAnswer.value.id = result.id ? result.id : null;
+
+        if (result.answerText === null || studentAnswer.value.id === null) {
+          studentAnswer.value.answerText = STUDENT_ANSWER_NOT_FOUND;
+          studentAnswer.value.replyText = MENTOR_REPLY_NOT_FOUND;
+          return;
+        }
+
+        if (result.replyText === null) {
+          studentAnswer.value.mark = 0;
+        }
+
+        studentAnswer.value.answerText = result.answerText;
+        studentAnswer.value.replyText = result.replyText ? result.replyText : MENTOR_REPLY_NOT_FOUND;
+        studentAnswer.value.mark = result.mark;
       }
     });
 
@@ -181,6 +227,16 @@ export default {
 
     function openNoRightsModal() {
       haveNoRightsModal.value = true;
+    }
+
+    function logResultIfFailure(result) {
+      if (typeof result === "object" && "errors" in result) {
+          console.log("Have Errors", result.errors);
+          return true;
+      }
+      else {
+        return false;
+      }
     }
 
     return {
@@ -204,54 +260,92 @@ export default {
 
   async mounted(){
     const taskId = this.$route.query.id;
-    await this.fetchTask(taskId);
 
-    const theme = await this.fetchThemeData(this.task.themeId);
+    const taskResult = await this.fetchTask(taskId);
 
-      if (taskId) {
+    if (this.logResultIfFailure(taskResult)) {
+      return;
+    }
 
-          this.themeData = { title: theme.title, number: theme.number };
+    this.task = taskResult;
 
-          if (this.getRole() === "Student"){
+    const themeResult = await this.fetchThemeData(this.task.themeId);
 
-            const studentId = this.getId();
-            const studentName = await this.getStudentName(studentId);
+    if (this.logResultIfFailure(themeResult)) {
+      return;
+    }
 
-            this.activeStudent = { id: studentId, fio: studentName};
-            this.students = [{ id: studentId, fio: studentName}];
+    const theme = themeResult;
 
-            await this.fetchAnswer(taskId, this.activeStudent.id);
+    if (taskId) {
+
+        this.themeData = { title: theme.title, number: theme.number };
+
+        if (this.getRole() === "Student"){
+
+          const studentId = this.getId();
+          const result = await this.getStudentMainInfo(studentId);
+
+          if (this.logResultIfFailure(result)) {
+            return;
           }
 
-          else if (this.getRole() === "Mentor") {
+          const studentName = result.fio;
 
-            const mentorId = this.getId();
+          this.activeStudent = { id: studentId, fio: studentName};
+          this.students = [{ id: studentId, fio: studentName}];
 
-            const groups = await this.getMentorCourseGroups(mentorId, theme.courseId);
+          await this.fetchAnswer(taskId, this.activeStudent.id);
+        }
 
-            let studentsData = [];
+        else if (this.getRole() === "Mentor") {
 
-            for (const groupId of groups.groupIds) {
-              const stdts = await this.getStudentsInfo(groupId);
+          const mentorId = this.getId();
 
-              for (const student of stdts){
-                studentsData.push(student);
-              }
+          const result = await this.getMentorCourseGroups(mentorId, theme.courseId);
+
+          if (this.logResultIfFailure(result)) {
+            return;
+          }
+
+          let studentsData = [];
+
+          for (const groupId of result.groupIds) {
+            const studentsResult = await this.getStudentsInfo(groupId);
+
+            if (this.logResultIfFailure(studentsResult)) {
+              return;
             }
-            
-            const students = studentsData.map(({ isAttest, ...rest }) => rest); // eslint-disable-line no-unused-vars
 
-            this.students = students;
-
-            this.activeStudent = this.students[0];
+            for (const student of studentsResult){
+              studentsData.push(student);
+            }
           }
-      } 
+          
+          const students = studentsData.map(({ isAttest, ...rest }) => rest); // eslint-disable-line no-unused-vars
+
+          this.students = students;
+
+          this.activeStudent = this.students[0];
+        }
+    } 
       else {
           console.error('No task ID provided');
     }
   },
 
   methods: {
+
+    logResultIfFailure(result) {
+
+      if (typeof result === "object" && "errors" in result) {
+          console.log("Have Errors", result.errors);
+          return true;
+      }
+      else {
+        return false;
+      }
+    },
 
     openAnswerModal() {
 
@@ -274,11 +368,20 @@ export default {
         return
       }
 
+      if (this.studentAnswer.id === null) {
+        console.log("Нельзя оценивать без ответа студента");
+        return;
+      }
+
       this.isMarkModalOpen = true;
 
       const taskId = this.$route.query.id;
+
       const solution = await this.getSolution(taskId);
+
       this.formMark.solutionText = solution;
+      this.formMark.mark = this.studentAnswer.mark;
+      this.formMark.replyText = this.studentAnswer.replyText;
     },
 
     closeMarkModal() {
@@ -295,81 +398,46 @@ export default {
 
     async getStudentsInfo(groupId){
       try {
-        const result = await fetch(`http://localhost:5036/Student/all-id-fio-status/${groupId}`);
+        const response = await fetch(`http://localhost:5036/Student/all-id-fio-status/${groupId}`);
 
-
-        if (typeof result === "object" && "errors" in result) {
-          console.log("Have Errors", result.errors);
-          return
-        }
-
-        const data = await result.json();
-        return data;
-
+        const result = await response.json();
+        return result;
       } 
       catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
+        console.error('Problem with server:', error);
       }
     },
 
     async getMentorCourseGroups(mentorId, courseId) {
-      try {
+
         const response = await fetch(`http://localhost:5036/Group/${mentorId}&${courseId}`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
 
-        const data = await response.json();
-        return data;
-
-      } 
-      catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
-      }
+        const result = await response.json();
+        return result;
     },
 
-    async getStudentIds(studentId) {
+    async getStudentMainInfo(studentId) {
 
       try {
         const response = await fetch(`http://localhost:5036/Student/main-info/${studentId}`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
 
-        const data = await response.json();
-        return data.fio;
-
+        const result = await response.json();
+        return result;
       } 
       catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
-      }
-    },
-    
-    async getStudentName(studentId) {
-
-      try {
-        const response = await fetch(`http://localhost:5036/Student/main-info/${studentId}`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-
-        const data = await response.json();
-        return data.fio;
-
-      } 
-      catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
+        console.error("Problem with server:", error);
       }
     },
 
     async fetchTask(taskId) {
       try {
         const response = await fetch(`http://localhost:5036/Task/${taskId}`);
-        if (!response.ok) throw new Error("Failed to fetch task");
-        this.task = await response.json();
+        const result = await response.json();
+
+        return result;
       } 
       catch (error) {
-        console.error("Error fetching task:", error);
+        console.error("Problem with server:", error);
       }
     },
 
@@ -377,13 +445,12 @@ export default {
 
       try {
         const response = await fetch(`http://localhost:5036/Theme/${themeId}`);
-        if (!response.ok) throw new Error("Failed to fetch theme data");
-        const data = await response.json();
+        const result = await response.json();
 
-        return data
+        return result
         
       } catch (error) {
-        console.error("Error fetching theme data:", error);
+        console.error("Problem with server:", error);
       }
     },
 
@@ -404,11 +471,6 @@ export default {
     },
 
     async sendAnswer() {
-
-      if (["Mentor", "Teacher"].includes(this.getRole())){
-        console.log("Нельзя за эту роль");
-        return;
-      }
 
       const request = {
         taskId: this.$route.query.id,
@@ -436,18 +498,30 @@ export default {
       }
     },
 
-    async sendReply(){
+    async toSendReply() {
 
       const request = {
         replyText: this.formMark.replyText,
         mark: this.formMark.mark
       }
-      
+
+      const result = await this.sendReply(request);
+
+      if (this.logResultIfFailure(result)) {
+        return;
+      }
+
+      console.log("Добавлен ответ ментора. id", result);
+
+      this.closeMarkModal();
+
+      this.studentAnswer.replyText = request.replyText;
+      this.studentAnswer.mark = request.mark;
+    },
+
+    async sendReply(request){
+
       try {
-
-          console.log(this.formMark.replyText);
-          console.log(this.formMark.mark);
-
           const response = await fetch(
               `http://localhost:5036/Answer/${this.studentAnswer.id}/reply-mark`,
               {
@@ -456,21 +530,16 @@ export default {
                   body: JSON.stringify(request),
               }
           );
-          if (!response.ok) throw new Error("Failed to send answer");
 
-          this.studentAnswer.answerText = request.answerText;
+          const result = await response.json();
 
-          this.closeMarkModal();
+          return result;
       } 
       catch (error) {
-          console.error("Error sending answer:", error);
+          console.error("Problem with server:", error);
       }
     }
-
-
   }
-
-
 };
 </script>
 
@@ -521,7 +590,7 @@ h2 {
 }
 
 .block {
-    margin-top: 10rem;
+    
     width: 98%;
     height: 2000px;
     display: flex;
@@ -529,7 +598,9 @@ h2 {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    justify-self: center;
+
+    margin: 0 auto;
+    margin-top: 10rem;
 }
 
 .block span{

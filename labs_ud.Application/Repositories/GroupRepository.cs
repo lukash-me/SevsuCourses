@@ -55,6 +55,22 @@ public class GroupRepository
         return result;
     }
     
+    public async Task<Result<List<Group>, Error>> GetByCourseId(
+        Guid CourseId, 
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _dbContext.Group
+            .Where(g => g.CourseId == CourseId)
+            .ToListAsync(cancellationToken);
+        
+        if (result.Count == 0)
+        {
+            return Errors.Errors.General.NotFound(CourseId);
+        }
+        
+        return result;
+    }
+    
     
     public Guid Delete(Group group, CancellationToken cancellationToken = default)
     {

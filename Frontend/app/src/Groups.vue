@@ -853,14 +853,13 @@ export default {
   }
 
   .container {
+    margin: 0 auto;
     margin-top: 100px;
 
     width: 80%;
     min-height: 630px;
 
     display: flex;
-    align-self: center;
-    justify-self: center;
     flex-direction: column;
     align-items: center;
     gap: 10px;

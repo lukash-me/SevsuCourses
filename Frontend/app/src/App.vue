@@ -422,7 +422,6 @@
     border-radius: 14px;
 }
 
-
 .card {
     width: 800px;
     min-height: 400px;

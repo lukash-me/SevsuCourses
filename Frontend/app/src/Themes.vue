@@ -1,4 +1,5 @@
 <template>
+
     <div v-if="haveNoRightsModal" class="overlay">
         <div class="delete-confirm" id="rights">
             <div class="text-modal">
