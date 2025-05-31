@@ -134,8 +134,6 @@ export default {
     const route = useRoute();
     const router = useRouter();
     const activeStudent = ref({});
-
-    const task = ref({});
     const themeData = ref({});
     const studentAnswer = ref({});
     const students = ref({});
@@ -219,7 +217,6 @@ export default {
     }
 
     return {
-      task,
       form,
       formMark,
       students,
@@ -236,25 +233,29 @@ export default {
     };
   },
 
-  async mounted(){
+  async getThemeByTask(taskId) {
 
-    const taskId = this.$route.query.id
     const taskResult = await getTask(taskId);
 
     if (logResultIfFailure(taskResult)) {
-      return;
+      return false;
     }
 
     const themeId = taskResult.themeId;
-    this.task = taskResult;
-
     const themeResult = await getTheme(themeId);
 
     if (logResultIfFailure(themeResult)) {
-      return;
+      return false;
     }
 
-    const theme = themeResult;
+    return themeResult;
+  },
+
+  async mounted(){
+
+    const taskId = this.$route.query.id
+    const theme  = await this.getThemeByTask(taskId);
+
     const courseId = theme.courseId;
 
     if (taskId) {

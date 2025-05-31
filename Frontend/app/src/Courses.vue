@@ -13,7 +13,7 @@
     <div></div>
     <div class="container">
         <div class="course-add-card">
-            <div class="add-button" @click="toCreateCourse">Добавить курс
+            <div class="add-button" @click="openFormModal">Добавить курс
                 <img src="images/add.jpg" alt="">
             </div>
         </div>
@@ -112,7 +112,8 @@
 <script>
 import { useRouter } from 'vue-router';
 import { reactive, ref } from 'vue';
-import Cookies from "js-cookie";
+import { logResultIfFailure, getRole, getId } from '@/utils/shared/shared'
+import { getCourseInfo, createCourse, updateCourseInfo, getAllCourses } from '@/utils/requests/courses'
 
 export default {
     name: 'CoursesPage',
@@ -163,89 +164,18 @@ export default {
     },
 
     methods: {
-        async getAllCourses() {
-            try {
-                const response = await fetch('http://localhost:5036/Course');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                const data = await response.json();
-                return data;
-            } 
-            catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
-        },
-
-        async getCourseInfo(courseId) {
-            try {
-                const response = await fetch(`http://localhost:5036/Course/${courseId}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
-                const data = await response.json();
-                return data
-            } 
-            catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
-        },
-
-        async updateCourseInfo(courseId, request) {
-
-            const response = await fetch(`http://localhost:5036/Course/main-info/${courseId}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(request),
-            });
-
-            const result = await response.json();
-
-            return result;
-        },
-
-        async createCourse(request) {
-
-            const response = await fetch(`http://localhost:5036/Course`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(request),
-            });
-
-            const result = await response.json();
-
-            return result;
-        },
-
-        async deleteCourse(courseId) {
-            try {
-                const response = await fetch(`http://localhost:5036/Course/${courseId}`, {
-                    method: "DELETE"
-                });
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
-                const result = await response.json();
-
-                return result;
-            } 
-            catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-            }
-        },
 
         async showAllCourses() {
-            const data = await this.getAllCourses();
+
+            const coursesResult = await getAllCourses();
+            if (logResultIfFailure(coursesResult)) {
+                return;
+            }
+
             let inRow = 1;
             let cardsRow = [];
             
-            data.forEach((course) => {
+            coursesResult.forEach((course) => {
                 if (inRow === 4) {
                     this.courseRows.push(cardsRow);
                     cardsRow = [];
@@ -270,17 +200,21 @@ export default {
         async editCourse(event, courseId) {
             event.stopPropagation(event);
 
-            if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+            if (getRole() != "Teacher" && getRole() != "Admin"){
                 this.openNoRightsModal();
                 return;
             }
 
-            const data = await this.getCourseInfo(courseId);
+            const courseInfoResult = await getCourseInfo(courseId);
+
+            if (logResultIfFailure(courseInfoResult)) {
+                return;
+            }
 
             this.form.courseId = courseId;
-            this.form.image = data.photo;
-            this.form.title = data.title;
-            this.form.description = data.description;
+            this.form.image = courseInfoResult.photo;
+            this.form.title = courseInfoResult.title;
+            this.form.description = courseInfoResult.description;
             this.form.method = "PUT";
 
             this.openFormModal();
@@ -296,136 +230,135 @@ export default {
                     description: this.form.description
                 }
 
-                const result = await this.updateCourseInfo(this.form.courseId, request);
+                const courseId = this.form.courseId;
 
-                if (typeof result === "object" && "errors" in result) {
-                    console.log("Have Errors", result.errors);
-                    return
+                const resultCourseInfo = await updateCourseInfo(courseId, request);
+
+                if (logResultIfFailure(resultCourseInfo)) {
+                    return;
                 }
                 
-                console.log("Курс успешно изменен", result);
+                console.log("Курс успешно изменен", resultCourseInfo);
 
                 this.closeFormModal();
-
                 await this.refreshCard();
             }
             else {
 
                 const request = {
-                    teacherId: Cookies.get("id"),
+                    teacherId: getId(),
                     photo: this.form.image,
                     title: this.form.title,
                     description: this.form.description
                 }
 
-                const result = await this.createCourse(request);
+                const result = await createCourse(request);
 
-                if (typeof result === "object" && "errors" in result) {
-                    console.log(result.errors);
-                    return
+                if (logResultIfFailure(result)) {
+                    return;
                 }
 
                 console.log("Курс успешно добавлен:", result);
 
-                this.form.courseId = result;
+                const course = {
+                    id: result,
+                    image: request.photo,
+                    title: request.title,
+                    description: request.description
+                };
 
                 this.closeFormModal();
-
-                this.addCard();
+                this.addCard(course);
             }
         },
 
-        // Обновление карточки на странице
         async refreshCard() {
-            const data = await this.getCourseInfo(this.form.courseId);
+
+            const courseId = this.form.courseId;
+            const courseInfoResult = await getCourseInfo(courseId);
+
+            if (logResultIfFailure(courseInfoResult)) {
+                return;
+            }
             
             const updatedCourse = {
-                "id": this.form.courseId,
-                "title": data.title,
-                "image": data.photo,
-                "description": data.description
+                "id": courseId,
+                "title": courseInfoResult.title,
+                "image": courseInfoResult.photo,
+                "description": courseInfoResult.description
             } 
 
             this.courseRows = this.courseRows.map(row =>
                 row.map(course => 
-                    (course.id === this.form.courseId ? { ...course, ...updatedCourse } : course))
+                    (course.id === courseId ? { ...course, ...updatedCourse } : course))
             );
         },
 
         // Отображение новой карточки на странице
-        async addCard() {
-            const data = await this.getCourseInfo(this.form.courseId);
-            
-            const createdCourse = {
-                "id": this.form.courseId,
-                "title": data.title,
-                "image": data.photo,
-                "description": data.description
-            }
+        async addCard(course) {
 
             if (this.courseRows[this.courseRows.length - 1].length != 4) {                
-                this.courseRows[this.courseRows.length - 1].push(createdCourse);
+                this.courseRows[this.courseRows.length - 1].push(course);
             }
             else {
-                this.courseRows.push([createdCourse]);
+                this.courseRows.push([course]);
             }
-        },
-
-        getRole() {
-            return Cookies.get("role");
-        },
-
-        toCreateCourse() {
-
-            if (this.getRole() != "Teacher" && this.getRole() != "admin"){
-                    this.openNoRightsModal();
-                    return;
-                }
-
-            this.form.courseId = null;
-            this.form.image = null;
-            this.form.title = null;
-            this.form.description = null;
-
-            this.openFormModal();
         },
 
         toDeleteCourse(event, id) {
 
             event.stopPropagation();
 
-            if (this.getRole() != "Teacher" && this.getRole() != "admin"){
+            if (getRole() != "Teacher" && getRole() != "admin"){
                 this.openNoRightsModal();
                 return;
             }
-            
-            this.openDeleteModal();
 
             this.form.courseId = id;
+
+            this.openDeleteModal(event);
         },
 
         async removeCourse() {
 
-            const result = await this.deleteCourse(this.form.courseId);
+            const courseId = this.form.courseId;
+            const result = await this.deleteCourse(courseId);
+
+            if (logResultIfFailure(result)) {
+                return;
+            }
 
             console.log("Курс успешно удален:", result);
 
             this.closeDeleteModal();
 
             this.courseRows = this.courseRows.map(row =>
-                row.filter(course => course.id !== this.form.courseId)
+                row.filter(course => course.id !== courseId)
             );
         },
 
         openFormModal() {
+
+            if (getRole() != "Teacher" && getRole() != "Admin"){
+                this.openNoRightsModal();
+                return;
+            }
+
             this.isModalFormOpen = true;
         },
 
         closeFormModal() {
+
+            this.form.courseId = null;
+            this.form.image = null;
+            this.form.title = null;
+            this.form.description = null;
+
             this.isModalFormOpen = false;
         },
 
         openDeleteModal() {
+
             this.isModalDeleteInfoOpen = true;
         },
 
