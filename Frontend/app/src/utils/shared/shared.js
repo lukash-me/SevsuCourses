@@ -1,8 +1,17 @@
 import Cookies from "js-cookie";
 
-export function logResultIfFailure(result) {
+export function logIfFailure(controller) {
+    if (controller.errors.length != 0) {
+        console.log("Have Errors", controller.errors);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+export function isFailure(result) {
     if (typeof result === "object" && "errors" in result) {
-        console.log("Have Errors", result.errors);
         return true;
     }
     else {

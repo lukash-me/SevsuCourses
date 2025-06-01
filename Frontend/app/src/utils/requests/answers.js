@@ -1,4 +1,4 @@
-export async function getAnswer(taskId, studentId) {
+export async function getLastAnswer(taskId, studentId) {
     try {
         const response = await fetch(
             `http://localhost:5036/Answer/last/taskId=${taskId}&studentId=${studentId}`

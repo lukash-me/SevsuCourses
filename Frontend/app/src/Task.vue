@@ -1,4 +1,7 @@
 <template>
+
+  <NoRightsModal v-if="haveNoRightsModal" @close="haveNoRightsModal=false"/>
+
   <div v-if="haveNoRightsModal" class="overlay">
         <div class="delete-confirm" id="rights">
             <div class="text-modal">
@@ -6,19 +9,20 @@
                 <span> <b>выполнения</b> данного действия</span>
             </div>
             <div class="btns-container">
-                <button class="cancel-btn" @click="closeNoRightsModal">Увы</button>
+                <button class="cancel-btn" @click="closeModal(haveNoRightsModal)">Увы</button>
             </div>
         </div>
     </div>
     <div>
         <div class="block">
-            <h1 v-if="themeData">Theme №{{ themeData.number + 1 }}. {{ themeData.title }}</h1>
+            <h1 v-if="theme">Theme №{{ theme.number + 1 }}. {{ theme.title }}</h1>
 
         
             <div class="img-container">
             <img src="/images/themes_01.jpg" alt="Theme Image" />
             </div>
 
+            <!-- лоадер добавить -->
             <h2>{{ task.title }}</h2>
 
             <div class="container">
@@ -41,7 +45,7 @@
 
             <div id="answer" class="container">
             <h2>Ответ студента</h2>
-            <span>{{ studentAnswer.answerText }}</span>
+            <span>{{ answer.answerText }}</span>
             <div class="status"></div>
             </div>
 
@@ -52,7 +56,7 @@
 
             <div class="container">
             <h2>Ответ ментора</h2>
-            <span>{{ studentAnswer.replyText ? studentAnswer.replyText : MENTOR_REPLY_NOT_FOUND }}</span>
+            <span>{{ answer.replyText ? answer.replyText : MENTOR_REPLY_NOT_FOUND }}</span>
             </div>
 
             <div class="btns-container">
@@ -86,7 +90,7 @@
 
                 <div class="field">
                   <span>Ответ студента</span>
-                  <textarea class="box" v-model="studentAnswer.answerText"></textarea>
+                  <textarea class="box" v-model="answer.answerText"></textarea>
                 </div>
 
                 <div class="field">
@@ -117,32 +121,47 @@
 <script>
 import { ref, reactive, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { STUDENT_ANSWER_NOT_FOUND, MENTOR_REPLY_NOT_FOUND } from '@/constants'
-import { getAnswer, createAnswer, createReply } from '@/utils/requests/answers';
-import { getTheme } from '@/utils/requests/themes';
-import { getTask } from '@/utils/requests/tasks';
-import { getStudentsInfo } from '@/utils/requests/students';
-import { getSolution } from '@/utils/requests/solutions';
+import NoRightsModal from '@/components/NoRightsModal.vue';
 
-import { getRole, getId, logResultIfFailure } from '@/utils/shared/shared';
+import { TasksController } from '@/controllers/tasksController';
+import { ThemesController } from '@/controllers/themesController';
+import { AnswersController } from '@/controllers/answersController';
+import { StudentsController } from '@/controllers/studentsController';
+import { SolutionsController } from '@/controllers/solutionsController';
+
+import { STUDENT_ANSWER_NOT_FOUND, MENTOR_REPLY_NOT_FOUND } from '@/constants';
+import { openModal, closeModal } from '@/utils/modals/modals';
+
+import { getRole, getId, logIfFailure } from '@/utils/shared/shared';
 import { getAllGroupsOnCourse, getMentorGroupsOnCourse } from "@/utils/requests/groups";
 
 export default {
   name: "TaskPage",
 
   setup() {
+    const taskController = new TasksController();
+    const themesController = new ThemesController();
+    const answersController = new AnswersController();
+    const studentsController = new StudentsController();
+    const solutionsController = new SolutionsController();
+
+    // model. ToDo: Сделать маппинг в нужный формат
+    const task = ref({});
+    const theme = ref({});
+    const answer = ref({}); // Сейчас один, но в будущем несколько с пагинацией
+
+
+
     const route = useRoute();
     const router = useRouter();
     const activeStudent = ref({});
-    const themeData = ref({});
-    const studentAnswer = ref({});
     const students = ref({});
     const showAnswerModal = ref(false);
     const isMarkModalOpen = ref(false);
     let haveNoRightsModal = ref(false);
 
     const form = reactive({
-                answerText: null,
+      answerText: null,
     });
 
     const formMark = reactive({
@@ -153,24 +172,9 @@ export default {
 
     const goToThemes = async () => {
 
-      const taskId = route.query.id;
-      const taskResult = await getTask(taskId);
-
-      if (logResultIfFailure(taskResult)) {
-        return;
-      }
-
-      const themeId = taskResult.themeId;
-
-      const result = await getTheme(themeId);
-
-      if (logResultIfFailure(result)) {
-        return;
-      }
-
       router.push({ 
         name: "themesPage", 
-        query: { id: result.courseId }
+        query: { id: theme.value.courseId }
       });
     };
 
@@ -181,103 +185,88 @@ export default {
       if (newStudent) {
 
         const studentId = newStudent.id;
-        const result = await getAnswer(taskId, studentId);
 
-        if (logResultIfFailure(result)) {
+        await answersController.loadAnswer(taskId, studentId);
 
-          if (result.errors[0].code!="record.not.found") {
+        if (answersController.errors.length != 0) {
+          if (answersController.errors[0].code!="record.not.found") {
             return
           }
         }
 
-        studentAnswer.value.id = result.id ? result.id : null;
+        answer.value = answersController.answers[0];
 
-        if (result.answerText === null || studentAnswer.value.id === null) {
-          studentAnswer.value.answerText = STUDENT_ANSWER_NOT_FOUND;
-          studentAnswer.value.replyText = MENTOR_REPLY_NOT_FOUND;
-          return;
+        if (answer.value === undefined) {
+          answer.value = {
+            answerText: STUDENT_ANSWER_NOT_FOUND,
+            replyText: MENTOR_REPLY_NOT_FOUND
+          }
+          return
         }
 
-        if (result.replyText === null) {
-          studentAnswer.value.mark = 0;
+        if (answer.value.replyText === null) {
+          answer.value.mark = 0;
+          answer.value.replyText = MENTOR_REPLY_NOT_FOUND;
         }
-
-        studentAnswer.value.answerText = result.answerText;
-        studentAnswer.value.replyText = result.replyText ? result.replyText : MENTOR_REPLY_NOT_FOUND;
-        studentAnswer.value.mark = result.mark;
       }
     });
 
-    function closeNoRightsModal() {
-      haveNoRightsModal.value = false;
-    }
-
-    function openNoRightsModal() {
-      haveNoRightsModal.value = true;
-    }
-
     return {
+      task,
+      theme,
+      answer,
       form,
       formMark,
       students,
       route,
-      themeData,
-      studentAnswer,
       showAnswerModal,
       isMarkModalOpen,
       activeStudent,
       goToThemes,
       haveNoRightsModal,
-      closeNoRightsModal,
-      openNoRightsModal,
+      closeModal,
+      NoRightsModal,
+      taskController,
+      themesController,
+      answersController,
+      studentsController,
+      solutionsController
+      
     };
-  },
-
-  async getThemeByTask(taskId) {
-
-    const taskResult = await getTask(taskId);
-
-    if (logResultIfFailure(taskResult)) {
-      return false;
-    }
-
-    const themeId = taskResult.themeId;
-    const themeResult = await getTheme(themeId);
-
-    if (logResultIfFailure(themeResult)) {
-      return false;
-    }
-
-    return themeResult;
   },
 
   async mounted(){
 
-    const taskId = this.$route.query.id
-    const theme  = await this.getThemeByTask(taskId);
+    const taskId = this.$route.query.id;
+    await this.getThemeByTask(taskId);
 
-    const courseId = theme.courseId;
+    const courseId = this.theme.courseId;
 
     if (taskId) {
-
-      this.themeData = { title: theme.title, number: theme.number };
 
       if (getRole() === "Student"){
 
         const studentId = getId();
-        const result = await this.getStudentMainInfo(studentId);
 
-        if (logResultIfFailure(result)) {
+        await this.studentsController.loadStudentMainInfo(studentId);
+
+        if (logIfFailure(this.studentsController)) {
+          return
+        }
+
+        const mainInfo = this.studentsController.students[0];
+
+        this.activeStudent = { id: studentId, fio: mainInfo.fio };
+        this.students = [{ id: studentId, fio: mainInfo.fio }];
+
+        await this.answersController.loadAnswer(taskId, studentId);
+
+        if (logIfFailure(this.answersController)) {
           return;
         }
 
-        const studentName = result.fio;
+        this.answer = this.answersController.answers[0];
 
-        this.activeStudent = { id: studentId, fio: studentName };
-        this.students = [{ id: studentId, fio: studentName }];
-
-        await getAnswer(taskId, this.activeStudent.id);
-        // TODO: обработка ошибки обработки ответа
         return;
       }
 
@@ -307,6 +296,29 @@ export default {
 
   methods: {
 
+    async getThemeByTask(taskId) {
+
+      await this.taskController.loadTask(taskId);
+
+      if (logIfFailure(this.taskController)) {
+        return false;
+      }
+
+      const task = this.taskController.tasks[0];
+
+      const themeId = task.themeId;
+      this.task = task;
+
+      await this.themesController.loadTheme(themeId);
+
+      if (logIfFailure(this.themesController)) {
+        return false;
+      }
+
+      const theme = this.themesController.themes[0];
+      this.theme = theme;
+    },
+
     setStudents(students) {
       this.students = students;
       this.activeStudent = this.students[0];
@@ -324,9 +336,9 @@ export default {
         groupsResult = await getMentorGroupsOnCourse(mentorId, courseId);
       }
 
-      if (logResultIfFailure(groupsResult)) {
-        return;
-      }
+      // if (logResultIfFailure(groupsResult)) {
+      //   return;
+      // }
 
       const groupIds = groupsResult.groupIds;
 
@@ -355,13 +367,13 @@ export default {
           groupIds: [id]
         }
 
-        const studentsResult = await getStudentsInfo(request);
+        await this.studentsController.loadStudentsInfo(request);
 
-        if (logResultIfFailure(studentsResult)) {
+        if (logIfFailure(this.studentsController)) {
           return;
         }
 
-        for (const student of studentsResult){
+        for (const student of this.studentsController.students){
           students.push(student);
         }
       }
@@ -369,18 +381,17 @@ export default {
       return students;
     },
 
-    setStudentsWithAnswers() {
-
-    },
-
     openAnswerModal() {
 
       if (getRole() != "Student" && getRole() != "Admin"){
-        this.openNoRightsModal();
+        // this.haveNoRightsModal = true;
+        console.log(this.haveNoRightsModal);
+        openModal(this.haveNoRightsModal);
         return
       }
 
       this.showAnswerModal = true;
+      this.form.answerText = this.answer.answerText;
     },
 
     closeAnswerModal() {
@@ -390,11 +401,12 @@ export default {
     async openMarkModal() {
 
       if (getRole() != "Mentor" & getRole() != "Admin"){
-        this.openNoRightsModal();
+        this.haveNoRightsModal=true;
+        openModal(this.haveNoRightsModal);
         return
       }
 
-      if (this.studentAnswer.id === null) {
+      if (this.answer.id === null) {
         console.log("Нельзя оценивать без ответа студента");
         return;
       }
@@ -403,17 +415,17 @@ export default {
 
       const taskId = this.$route.query.id;
 
-      const solutionResult = await getSolution(taskId);
+      await this.solutionsController.loadSolution(taskId);
 
-      if (logResultIfFailure(solutionResult)) {
-        return
+      if (logIfFailure(this.solutionsController)) {
+        return;
       }
 
-      const solution = solutionResult[0];
+      const solution = this.solutionsController.solutions[0];
 
       this.formMark.solutionText = solution;
-      this.formMark.mark = this.studentAnswer.mark;
-      this.formMark.replyText = this.studentAnswer.replyText;
+      this.formMark.mark = this.answer.mark;
+      this.formMark.replyText = this.answer.replyText;
     },
 
     closeMarkModal() {
@@ -422,19 +434,30 @@ export default {
 
     async sendAnswer() {
 
+      const taskId = this.$route.query.id;
+      const studentId = getId();
+
       const request = {
-        taskId: this.$route.query.id,
-        studentId: getId(),
+        taskId: taskId,
+        studentId: studentId,
         answerText: this.form.answerText
       }
 
-      const result = await createAnswer();
+      await this.answersController.createAnswer(request);
 
-      if (logResultIfFailure(result)) { 
+      if (logIfFailure(this.answersController)) {
         return;
       }
 
-      this.studentAnswer.answerText = request.answerText;
+      await this.answersController.loadAnswer(taskId, studentId);
+
+      if (logIfFailure(this.answersController)) {
+        return;
+      }
+
+      this.answer = this.answersController.answers[0];
+      this.answer.replyText = MENTOR_REPLY_NOT_FOUND;
+
       this.closeAnswerModal();
     },
 
@@ -445,20 +468,25 @@ export default {
         mark: this.formMark.mark
       }
 
-      const answerId = this.studentAnswer.id;
+      const answerId = this.answer.id;
 
-      const result = await createReply(answerId, request);
+      await this.answersController.createReply(answerId, request);
 
-      if (logResultIfFailure(result)) {
+      if (logIfFailure(this.answersController)) {
         return;
       }
 
-      console.log("Добавлен ответ ментора. id", result);
+      console.log("Добавлен ответ ментора. id", this.answersController.answers[0]);
 
       this.closeMarkModal();
 
-      this.studentAnswer.replyText = request.replyText;
-      this.studentAnswer.mark = request.mark;
+      await this.answersController.loadAnswer(this.task.id, this.activeStudent.id);
+
+      if (logIfFailure(this.answersController)) {
+        return;
+      }
+
+      this.answer = this.answersController.answers[0];
     },
   }
 };

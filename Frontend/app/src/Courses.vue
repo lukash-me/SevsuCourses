@@ -168,9 +168,9 @@ export default {
         async showAllCourses() {
 
             const coursesResult = await getAllCourses();
-            if (logResultIfFailure(coursesResult)) {
-                return;
-            }
+            // if (logResultIfFailure(coursesResult)) {
+            //     return;
+            // }
 
             let inRow = 1;
             let cardsRow = [];
@@ -207,9 +207,9 @@ export default {
 
             const courseInfoResult = await getCourseInfo(courseId);
 
-            if (logResultIfFailure(courseInfoResult)) {
-                return;
-            }
+            // if (logResultIfFailure(courseInfoResult)) {
+            //     return;
+            // }
 
             this.form.courseId = courseId;
             this.form.image = courseInfoResult.photo;
@@ -234,9 +234,9 @@ export default {
 
                 const resultCourseInfo = await updateCourseInfo(courseId, request);
 
-                if (logResultIfFailure(resultCourseInfo)) {
-                    return;
-                }
+                // if (logResultIfFailure(resultCourseInfo)) {
+                //     return;
+                // }
                 
                 console.log("Курс успешно изменен", resultCourseInfo);
 
@@ -277,9 +277,9 @@ export default {
             const courseId = this.form.courseId;
             const courseInfoResult = await getCourseInfo(courseId);
 
-            if (logResultIfFailure(courseInfoResult)) {
-                return;
-            }
+            // if (logResultIfFailure(courseInfoResult)) {
+            //     return;
+            // }
             
             const updatedCourse = {
                 "id": courseId,
@@ -324,9 +324,9 @@ export default {
             const courseId = this.form.courseId;
             const result = await this.deleteCourse(courseId);
 
-            if (logResultIfFailure(result)) {
-                return;
-            }
+            // if (logResultIfFailure(result)) {
+            //     return;
+            // }
 
             console.log("Курс успешно удален:", result);
 

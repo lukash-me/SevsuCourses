@@ -227,7 +227,7 @@
     import { reactive, ref } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import { URL_IMG_THEME_CARD_DEFAULT } from '@/constants'
-    import { logResultIfFailure, getRole } from '@/utils/shared/shared';
+    import { getRole } from '@/utils/shared/shared';
 
     import { getCourseTitleAndTeacher } from '@/utils/requests/courses';
     import { getAllThemes, getTheme, updateTheme, createTheme, deleteTheme } from '@/utils/requests/themes';
@@ -285,9 +285,9 @@
 
                     const courseTitleAndTeacherResult = await getCourseTitleAndTeacher(courseId);
 
-                    if (logResultIfFailure(courseTitleAndTeacherResult)){
-                        return;
-                    }
+                    // if (logResultIfFailure(courseTitleAndTeacherResult)){
+                    //     return;
+                    // }
 
                     this.courseTitle = courseTitleAndTeacherResult.title;
 
@@ -308,9 +308,9 @@
 
                     const tasksResult = await getTasksByTheme(themes[i].id);
 
-                    if (logResultIfFailure(tasksResult)) {
-                        return;
-                    }
+                    // if (logResultIfFailure(tasksResult)) {
+                    //     return;
+                    // }
 
                     const theme = {
                         ...themes[i],
@@ -327,9 +327,9 @@
 
                 const themesResult = await getAllThemes(courseId);
 
-                if (logResultIfFailure(themesResult)) {
-                    return;
-                }
+                // if (logResultIfFailure(themesResult)) {
+                //     return;
+                // }
                 
                 const themes = await this.addTasksToThemes(themesResult);
                 this.themes = themes.sort((a, b) => a.number - b.number);
@@ -370,9 +370,9 @@
 
                     const result = await createTheme(request);
                     
-                    if (logResultIfFailure(result)) {
-                        return;
-                    }
+                    // if (logResultIfFailure(result)) {
+                    //     return;
+                    // }
 
                     console.log("Тема успешно создана:", result);
 
@@ -383,9 +383,9 @@
                 else {
                     const result = await updateTheme(themeId, request);
 
-                    if (logResultIfFailure(result)) {
-                        return;
-                    }
+                    // if (logResultIfFailure(result)) {
+                    //     return;
+                    // }
 
                     console.log("Тема успешно обновлена:", result);
 
@@ -400,9 +400,9 @@
                 const themeId = this.formTheme.themeId;
                 const themeResult = await getTheme(themeId);
 
-                if (logResultIfFailure(themeResult)) {
-                    return;
-                }
+                // if (logResultIfFailure(themeResult)) {
+                //     return;
+                // }
 
                 const updatedTheme = {
                     "id": themeId,
@@ -441,10 +441,10 @@
                 this.formTheme.themeId = themeId;
                 const result = await getTheme(themeId);
 
-                if (typeof result === "object" && "errors" in result) {
-                    console.log("Have Errors", result.errors);
-                    return
-                }
+                // if (typeof result === "object" && "errors" in result) {
+                //     console.log("Have Errors", result.errors);
+                //     return
+                // }
 
                 this.formTheme.title = result.title;
                 this.formTheme.image = result.photo;
@@ -473,9 +473,9 @@
 
                 const result = await deleteTheme(this.formTheme.themeId);
 
-                if (logResultIfFailure(result)) {
-                    return;
-                }
+                // if (logResultIfFailure(result)) {
+                //     return;
+                // }
 
                 console.log("Тема успешно удалена:", result);
 
@@ -508,9 +508,9 @@
 
                 const result = await createTask(request);
 
-                if (logResultIfFailure(result)) {
-                    return;
-                }
+                // if (logResultIfFailure(result)) {
+                //     return;
+                // }
 
                 console.log("Задача успешно создана:", result);
 
@@ -540,9 +540,9 @@
 
                 const result = await deleteTask(taskId);
 
-                if (logResultIfFailure(result)) {
-                    return;
-                }
+                // if (logResultIfFailure(result)) {
+                //     return;
+                // }
 
                 console.log("Задача успешно удалена:", result);
 
