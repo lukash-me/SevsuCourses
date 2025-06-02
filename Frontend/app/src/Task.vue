@@ -119,7 +119,7 @@
 </template>
 
 <script>
-import { ref, reactive, watch } from "vue";
+import { ref, reactive, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import NoRightsModal from '@/components/NoRightsModal.vue';
 
@@ -177,7 +177,257 @@ export default {
         name: "themesPage", 
         query: { id: theme.value.courseId }
       });
-    };
+    }
+
+    onMounted(async () => {
+
+      const taskId = useRoute().query.id;
+      await getThemeByTask(taskId);
+
+      const courseId = theme.value.courseId;
+
+      if (taskId) {
+
+        if (getRole() === "Student"){
+
+          const studentId = getId();
+
+          await studentsController.loadStudentMainInfo(studentId);
+
+          if (logIfFailure(studentsController)) {
+            return
+          }
+
+          const mainInfo = studentsController.students[0];
+
+          activeStudent.value = { id: studentId, fio: mainInfo.fio };
+          students.value = [{ id: studentId, fio: mainInfo.fio }];
+
+          await answersController.loadAnswer(taskId, studentId);
+
+          if (logIfFailure(answersController)) {
+            return;
+          }
+
+          answer.value = answersController.answers[0];
+
+          return;
+        }
+
+        if (getRole() === "Mentor") {
+
+          const mentorId = getId();
+
+          let students = await getStudents(courseId, mentorId);
+          students = dropAttestFromStudents(students);
+
+          setStudents(students);
+
+          return;
+        }
+
+        if (getRole() === "Teacher" || getRole() === "Admin") {
+
+          let students = await getStudents(courseId);
+          students = dropAttestFromStudents(students);
+          
+          setStudents(students);
+
+          return;
+        }
+      } 
+    })
+
+    async function getThemeByTask(taskId) {
+
+      await taskController.loadTask(taskId);
+
+      if (logIfFailure(taskController)) {
+        return false;
+      }
+
+      const currentTask = taskController.tasks[0];
+      const themeId = currentTask.themeId;
+      task.value = currentTask;
+
+      await themesController.loadTheme(themeId);
+
+      if (logIfFailure(themesController)) {
+        return false;
+      }
+
+      const currentTheme = themesController.themes[0];
+      theme.value = currentTheme;
+    }
+
+    function setStudents(currentStudents) {
+      students.value = currentStudents;
+      activeStudent.value = currentStudents[0];
+    }
+
+    async function getStudents(courseId, mentorId=null) {
+
+      if (mentorId===null) {
+        await groupsController.loadAllGroupsOnCourse(courseId);
+      }
+
+      if (mentorId) {
+        await groupsController.loadMentorGroupsOnCourse(mentorId, courseId);
+      }
+
+      if (logIfFailure(groupsController)) {
+        return;
+      }
+
+      const groups = groupsController.groups;
+      const groupIds = groups.groupIds;
+
+      const result = await getStudentsFromGroups(groupIds);
+      return result;
+    }
+
+    function dropAttestFromStudents(students) {
+
+      const result = students.map(student => {
+        // eslint-disable-next-line no-unused-vars
+        const { isAttest, ...rest } = student; 
+        return rest;
+      });
+
+      return result;
+    }
+
+    async function getStudentsFromGroups(groupIds) {
+
+      let students = [];
+
+      for (const id of groupIds) {
+
+        const request = {
+          groupIds: [id]
+        }
+
+        await studentsController.loadStudentsInfo(request);
+
+        if (logIfFailure(studentsController)) {
+          return;
+        }
+
+        for (const student of studentsController.students){
+          students.push(student);
+        }
+      }
+
+      return students;
+    }
+
+    function openAnswerModal() {
+
+      if (getRole() != "Student" && getRole() != "Admin"){
+        // this.haveNoRightsModal = true;
+        console.log(haveNoRightsModal);
+        openModal(haveNoRightsModal);
+        return
+      }
+
+      showAnswerModal.value = true;
+      form.value.answerText = answer.value.answerText;
+    }
+
+    function closeAnswerModal() {
+      showAnswerModal.value = false;
+    }
+
+    async function openMarkModal() {
+
+      if (getRole() != "Mentor" & getRole() != "Admin"){
+        haveNoRightsModal.value=true;
+        openModal(haveNoRightsModal);
+        return
+      }
+
+      if (answer.value.id === null) {
+        console.log("Нельзя оценивать без ответа студента");
+        return;
+      }
+
+      isMarkModalOpen.value = true;
+
+      const taskId = this.$route.query.id;
+
+      await solutionsController.loadSolution(taskId);
+
+      if (logIfFailure(solutionsController)) {
+        return;
+      }
+
+      const solution = solutionsController.solutions[0];
+
+      formMark.value.solutionText = solution;
+      formMark.value.mark = answer.value.mark;
+      formMark.value.replyText = answer.value.replyText;
+    }
+
+    function closeMarkModal() {
+      isMarkModalOpen.value = false;
+    }
+
+    async function sendAnswer() {
+
+      const taskId = this.$route.query.id;
+      const studentId = getId();
+
+      const request = {
+        taskId: taskId,
+        studentId: studentId,
+        answerText: form.value.answerText
+      }
+
+      await answersController.createAnswer(request);
+
+      if (logIfFailure(answersController)) {
+        return;
+      }
+
+      await answersController.loadAnswer(taskId, studentId);
+
+      if (logIfFailure(answersController)) {
+        return;
+      }
+
+      answer.value = answersController.answers[0];
+      answer.value.replyText = MENTOR_REPLY_NOT_FOUND;
+
+      this.closeAnswerModal();
+    }
+
+    async function sendReply() {
+
+      const request = {
+        replyText: formMark.value.replyText,
+        mark: formMark.value.mark
+      }
+
+      const answerId = answer.value.id;
+
+      await answersController.createReply(answerId, request);
+
+      if (logIfFailure(answersController)) {
+        return;
+      }
+
+      console.log("Добавлен ответ ментора. id", answersController.answers[0]);
+
+      closeMarkModal();
+
+      await answersController.loadAnswer(task.value.id, activeStudent.value.id);
+
+      if (logIfFailure(answersController)) {
+        return;
+      }
+
+      answer.value = answersController.answers[0];
+    }
 
     watch(activeStudent, async (newStudent) => {
 
@@ -232,264 +482,20 @@ export default {
       answersController,
       studentsController,
       solutionsController,
-      groupsController
+      groupsController,
+      getThemeByTask,
+      setStudents,
+      dropAttestFromStudents,
+      openAnswerModal,
+      sendAnswer,
+      openMarkModal,
+      closeAnswerModal,
+      getStudents,
+      sendReply,
       
     };
   },
 
-  async mounted(){
-
-    const taskId = this.$route.query.id;
-    await this.getThemeByTask(taskId);
-
-    const courseId = this.theme.courseId;
-
-    if (taskId) {
-
-      if (getRole() === "Student"){
-
-        const studentId = getId();
-
-        await this.studentsController.loadStudentMainInfo(studentId);
-
-        if (logIfFailure(this.studentsController)) {
-          return
-        }
-
-        const mainInfo = this.studentsController.students[0];
-
-        this.activeStudent = { id: studentId, fio: mainInfo.fio };
-        this.students = [{ id: studentId, fio: mainInfo.fio }];
-
-        await this.answersController.loadAnswer(taskId, studentId);
-
-        if (logIfFailure(this.answersController)) {
-          return;
-        }
-
-        this.answer = this.answersController.answers[0];
-
-        return;
-      }
-
-      if (getRole() === "Mentor") {
-
-        const mentorId = getId();
-
-        let students = await this.getStudents(courseId, mentorId);
-        students = this.dropAttestFromStudents(students);
-
-        this.setStudents(students);
-
-        return;
-      }
-
-      if (getRole() === "Teacher" || getRole() === "Admin") {
-
-        let students = await this.getStudents(courseId);
-        students = this.dropAttestFromStudents(students);
-        
-        this.setStudents(students);
-
-        return;
-      }
-    } 
-  },
-
-  methods: {
-
-    async getThemeByTask(taskId) {
-
-      await this.taskController.loadTask(taskId);
-
-      if (logIfFailure(this.taskController)) {
-        return false;
-      }
-
-      const task = this.taskController.tasks[0];
-
-      const themeId = task.themeId;
-      this.task = task;
-
-      await this.themesController.loadTheme(themeId);
-
-      if (logIfFailure(this.themesController)) {
-        return false;
-      }
-
-      const theme = this.themesController.themes[0];
-      this.theme = theme;
-    },
-
-    setStudents(students) {
-      this.students = students;
-      this.activeStudent = this.students[0];
-    },
-
-    async getStudents(courseId, mentorId=null) {
-
-      if (mentorId===null) {
-        await this.groupsController.loadAllGroupsOnCourse(courseId);
-      }
-
-      if (mentorId) {
-        await this.groupsController.loadMentorGroupsOnCourse(mentorId, courseId);
-      }
-
-      if (logIfFailure(this.groupsController)) {
-        return;
-      }
-
-      const groups = this.groupsController.groups;
-      const groupIds = groups.groupIds;
-
-      const result = await this.getStudentsFromGroups(groupIds);
-      return result;
-    },
-
-    dropAttestFromStudents(students) {
-
-      const result = students.map(student => {
-        // eslint-disable-next-line no-unused-vars
-        const { isAttest, ...rest } = student; 
-        return rest;
-      });
-
-      return result;
-    },
-
-    async getStudentsFromGroups(groupIds) {
-
-      let students = [];
-
-      for (const id of groupIds) {
-
-        const request = {
-          groupIds: [id]
-        }
-
-        await this.studentsController.loadStudentsInfo(request);
-
-        if (logIfFailure(this.studentsController)) {
-          return;
-        }
-
-        for (const student of this.studentsController.students){
-          students.push(student);
-        }
-      }
-
-      return students;
-    },
-
-    openAnswerModal() {
-
-      if (getRole() != "Student" && getRole() != "Admin"){
-        // this.haveNoRightsModal = true;
-        console.log(this.haveNoRightsModal);
-        openModal(this.haveNoRightsModal);
-        return
-      }
-
-      this.showAnswerModal = true;
-      this.form.answerText = this.answer.answerText;
-    },
-
-    closeAnswerModal() {
-      this.showAnswerModal = false;
-    },
-
-    async openMarkModal() {
-
-      if (getRole() != "Mentor" & getRole() != "Admin"){
-        this.haveNoRightsModal=true;
-        openModal(this.haveNoRightsModal);
-        return
-      }
-
-      if (this.answer.id === null) {
-        console.log("Нельзя оценивать без ответа студента");
-        return;
-      }
-
-      this.isMarkModalOpen = true;
-
-      const taskId = this.$route.query.id;
-
-      await this.solutionsController.loadSolution(taskId);
-
-      if (logIfFailure(this.solutionsController)) {
-        return;
-      }
-
-      const solution = this.solutionsController.solutions[0];
-
-      this.formMark.solutionText = solution;
-      this.formMark.mark = this.answer.mark;
-      this.formMark.replyText = this.answer.replyText;
-    },
-
-    closeMarkModal() {
-      this.isMarkModalOpen = false;
-    },
-
-    async sendAnswer() {
-
-      const taskId = this.$route.query.id;
-      const studentId = getId();
-
-      const request = {
-        taskId: taskId,
-        studentId: studentId,
-        answerText: this.form.answerText
-      }
-
-      await this.answersController.createAnswer(request);
-
-      if (logIfFailure(this.answersController)) {
-        return;
-      }
-
-      await this.answersController.loadAnswer(taskId, studentId);
-
-      if (logIfFailure(this.answersController)) {
-        return;
-      }
-
-      this.answer = this.answersController.answers[0];
-      this.answer.replyText = MENTOR_REPLY_NOT_FOUND;
-
-      this.closeAnswerModal();
-    },
-
-    async sendReply() {
-
-      const request = {
-        replyText: this.formMark.replyText,
-        mark: this.formMark.mark
-      }
-
-      const answerId = this.answer.id;
-
-      await this.answersController.createReply(answerId, request);
-
-      if (logIfFailure(this.answersController)) {
-        return;
-      }
-
-      console.log("Добавлен ответ ментора. id", this.answersController.answers[0]);
-
-      this.closeMarkModal();
-
-      await this.answersController.loadAnswer(this.task.id, this.activeStudent.id);
-
-      if (logIfFailure(this.answersController)) {
-        return;
-      }
-
-      this.answer = this.answersController.answers[0];
-    },
-  }
 };
 </script>
 
