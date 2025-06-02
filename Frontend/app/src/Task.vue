@@ -128,12 +128,12 @@ import { ThemesController } from '@/controllers/themesController';
 import { AnswersController } from '@/controllers/answersController';
 import { StudentsController } from '@/controllers/studentsController';
 import { SolutionsController } from '@/controllers/solutionsController';
+import { GroupsController } from '@/controllers/groupsController';
 
 import { STUDENT_ANSWER_NOT_FOUND, MENTOR_REPLY_NOT_FOUND } from '@/constants';
 import { openModal, closeModal } from '@/utils/modals/modals';
 
 import { getRole, getId, logIfFailure } from '@/utils/shared/shared';
-import { getAllGroupsOnCourse, getMentorGroupsOnCourse } from "@/utils/requests/groups";
 
 export default {
   name: "TaskPage",
@@ -144,6 +144,7 @@ export default {
     const answersController = new AnswersController();
     const studentsController = new StudentsController();
     const solutionsController = new SolutionsController();
+    const groupsController = new GroupsController();
 
     // model. ToDo: Сделать маппинг в нужный формат
     const task = ref({});
@@ -230,7 +231,8 @@ export default {
       themesController,
       answersController,
       studentsController,
-      solutionsController
+      solutionsController,
+      groupsController
       
     };
   },
@@ -326,21 +328,20 @@ export default {
 
     async getStudents(courseId, mentorId=null) {
 
-      let groupsResult;
-
       if (mentorId===null) {
-        groupsResult = await getAllGroupsOnCourse(courseId);
+        await this.groupsController.loadAllGroupsOnCourse(courseId);
       }
 
       if (mentorId) {
-        groupsResult = await getMentorGroupsOnCourse(mentorId, courseId);
+        await this.groupsController.loadMentorGroupsOnCourse(mentorId, courseId);
       }
 
-      // if (logResultIfFailure(groupsResult)) {
-      //   return;
-      // }
+      if (logIfFailure(this.groupsController)) {
+        return;
+      }
 
-      const groupIds = groupsResult.groupIds;
+      const groups = this.groupsController.groups;
+      const groupIds = groups.groupIds;
 
       const result = await this.getStudentsFromGroups(groupIds);
       return result;
