@@ -11,3 +11,8 @@
         </div>
     </div>
 </template>
+
+<style scoped>
+@import "../assets/styles/info-modals.css";
+@import "../assets/styles/forms.css";
+</style>

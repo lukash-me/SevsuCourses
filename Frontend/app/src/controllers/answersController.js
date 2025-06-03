@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { getLastAnswer, createAnswer, createReply } from '@/utils/requests/answers'
 import { isFailure } from '@/utils/shared/shared'
+import { Answer } from '@/utils/models/answer'
 
 export class AnswersController {
 
@@ -27,7 +28,9 @@ export class AnswersController {
             return;
         }
 
-        this.answers = [result];
+        const answer = new Answer(result.id, null, null, result.mark, result.replyText, result.answerText, result.dateSent, result.dateReplied);
+
+        this.answers = [answer];
         this.isLoading = false;
         return;
     }

@@ -1,18 +1,7 @@
 <template>
 
-  <NoRightsModal v-if="haveNoRightsModal" @close="haveNoRightsModal=false"/>
+  <NoRightsModal v-if="haveNoRightsModal==true" @close="haveNoRightsModal=false"/>
 
-  <div v-if="haveNoRightsModal" class="overlay">
-        <div class="delete-confirm" id="rights">
-            <div class="text-modal">
-                <span>У вас<span class="red-font"> нет прав</span> для</span>
-                <span> <b>выполнения</b> данного действия</span>
-            </div>
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeModal(haveNoRightsModal)">Увы</button>
-            </div>
-        </div>
-    </div>
     <div>
         <div class="block">
             <h1 v-if="theme">Theme №{{ theme.number + 1 }}. {{ theme.title }}</h1>
@@ -56,7 +45,7 @@
 
             <div class="container">
             <h2>Ответ ментора</h2>
-            <span>{{ answer.replyText ? answer.replyText : MENTOR_REPLY_NOT_FOUND }}</span>
+            <span>{{ answer ? answer.replyText : "loading..." }}</span>
             </div>
 
             <div class="btns-container">
@@ -84,36 +73,13 @@
             </div>
 
             <!-- Модальное окно ответа ментора -->
-            <div v-if="isMarkModalOpen" class="overlay">
-              <form class="reply-send-form" @submit.prevent="handleSubmit" novalidate>
-                <h1>Оценивание ответа студента</h1>
 
-                <div class="field">
-                  <span>Ответ студента</span>
-                  <textarea class="box" v-model="answer.answerText"></textarea>
-                </div>
-
-                <div class="field">
-                  <span>Эталонное решение</span>
-                  <textarea class="box" v-model="formMark.solutionText"></textarea>
-                </div>
-
-                <div class="field">
-                  <span>Ваш комментарий</span>
-                  <textarea class="box" v-model="formMark.replyText"></textarea>
-                </div>
-
-                <div class="field">
-                  <span>Оценить выполнение</span>
-                  <input class="markBox" v-model="formMark.mark" type="number" name="mark">
-                </div>
-                
-                <div class="btns-form-container">
-                  <button class="cancel-btn" @click="closeMarkModal"> Вернуться</button>
-                  <button class="save-btn" @click="sendReply">Отправить</button>
-                </div>
-              </form>
-            </div>
+            <FormReply v-if="isMarkModalOpen" 
+              :answer="answer"
+              :form="formMark"
+              @submit="sendReply" 
+              @close="isMarkModalOpen=false" 
+            />
         </div>
     </div>
 </template>
@@ -121,7 +87,9 @@
 <script>
 import { ref, reactive, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
 import NoRightsModal from '@/components/NoRightsModal.vue';
+import FormReply from '@/components/FormReply.vue';
 
 import { TasksController } from '@/controllers/tasksController';
 import { ThemesController } from '@/controllers/themesController';
@@ -138,6 +106,11 @@ import { getRole, getId, logIfFailure } from '@/utils/shared/shared';
 export default {
   name: "TaskPage",
 
+  components: {
+    NoRightsModal,
+    FormReply
+  },
+
   setup() {
     const taskController = new TasksController();
     const themesController = new ThemesController();
@@ -146,10 +119,12 @@ export default {
     const solutionsController = new SolutionsController();
     const groupsController = new GroupsController();
 
+    const answer = ref({});
+
     // model. ToDo: Сделать маппинг в нужный формат
     const task = ref({});
     const theme = ref({});
-    const answer = ref({}); // Сейчас один, но в будущем несколько с пагинацией
+    //const answer = ref({}); // Сейчас один, но в будущем несколько с пагинацией
 
 
 
@@ -165,11 +140,7 @@ export default {
       answerText: null,
     });
 
-    const formMark = reactive({
-      solutionText: null,
-      replyText: null,
-      mark: 0
-    });
+    const formMark = ref({});
 
     const goToThemes = async () => {
 
@@ -177,6 +148,28 @@ export default {
         name: "themesPage", 
         query: { id: theme.value.courseId }
       });
+    }
+
+    // Это должна быть generic функция
+    async function getMainInfo(controller, entityId) {
+
+      await controller.loadStudentMainInfo(entityId);
+
+      if (logIfFailure(controller)) {
+        return
+      }
+    }
+
+    async function getAnswer(controller, taskId, studentId) {
+      await controller.loadAnswer(taskId, studentId);
+
+      if (logIfFailure(controller)) {
+        return;
+      }
+    }
+
+    function setAnswer() {
+      answer.value = answersController.answers[0];
     }
 
     onMounted(async () => {
@@ -192,29 +185,20 @@ export default {
 
           const studentId = getId();
 
-          await studentsController.loadStudentMainInfo(studentId);
-
-          if (logIfFailure(studentsController)) {
-            return
-          }
+          await getMainInfo(studentsController, studentId);
 
           const mainInfo = studentsController.students[0];
+          const currentStudents = [{ id: studentId, fio: mainInfo.fio }];
 
-          activeStudent.value = { id: studentId, fio: mainInfo.fio };
-          students.value = [{ id: studentId, fio: mainInfo.fio }];
-
-          await answersController.loadAnswer(taskId, studentId);
-
-          if (logIfFailure(answersController)) {
-            return;
-          }
-
-          answer.value = answersController.answers[0];
+          setStudents(currentStudents);
 
           return;
         }
 
         if (getRole() === "Mentor") {
+
+          //getStudents
+          //setStudents
 
           const mentorId = getId();
 
@@ -331,7 +315,8 @@ export default {
       }
 
       showAnswerModal.value = true;
-      form.value.answerText = answer.value.answerText;
+
+      form.answerText = answer.value.answerText;
     }
 
     function closeAnswerModal() {
@@ -341,7 +326,6 @@ export default {
     async function openMarkModal() {
 
       if (getRole() != "Mentor" & getRole() != "Admin"){
-        haveNoRightsModal.value=true;
         openModal(haveNoRightsModal);
         return
       }
@@ -351,9 +335,7 @@ export default {
         return;
       }
 
-      isMarkModalOpen.value = true;
-
-      const taskId = this.$route.query.id;
+      const taskId = route.query.id;
 
       await solutionsController.loadSolution(taskId);
 
@@ -366,6 +348,8 @@ export default {
       formMark.value.solutionText = solution;
       formMark.value.mark = answer.value.mark;
       formMark.value.replyText = answer.value.replyText;
+
+      isMarkModalOpen.value = true;
     }
 
     function closeMarkModal() {
@@ -374,13 +358,14 @@ export default {
 
     async function sendAnswer() {
 
-      const taskId = this.$route.query.id;
+      const taskId = route.query.id;
+      
       const studentId = getId();
 
       const request = {
         taskId: taskId,
         studentId: studentId,
-        answerText: form.value.answerText
+        answerText: form.answerText
       }
 
       await answersController.createAnswer(request);
@@ -401,11 +386,15 @@ export default {
       this.closeAnswerModal();
     }
 
-    async function sendReply() {
+    async function sendReply(form) {
+
+      if (form instanceof Event) {
+        return;
+      }
 
       const request = {
-        replyText: formMark.value.replyText,
-        mark: formMark.value.mark
+        replyText: form.replyText,
+        mark: form.mark
       }
 
       const answerId = answer.value.id;
@@ -420,13 +409,13 @@ export default {
 
       closeMarkModal();
 
-      await answersController.loadAnswer(task.value.id, activeStudent.value.id);
+      await getAnswer(answersController, task.value.id, activeStudent.value.id);
 
       if (logIfFailure(answersController)) {
         return;
       }
 
-      answer.value = answersController.answers[0];
+      setAnswer();
     }
 
     watch(activeStudent, async (newStudent) => {
@@ -445,7 +434,7 @@ export default {
           }
         }
 
-        answer.value = answersController.answers[0];
+        setAnswer();
 
         if (answer.value === undefined) {
           answer.value = {
@@ -476,7 +465,6 @@ export default {
       goToThemes,
       haveNoRightsModal,
       closeModal,
-      NoRightsModal,
       taskController,
       themesController,
       answersController,
@@ -492,6 +480,7 @@ export default {
       closeAnswerModal,
       getStudents,
       sendReply,
+      closeMarkModal
       
     };
   },
