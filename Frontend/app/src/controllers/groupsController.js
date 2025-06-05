@@ -28,9 +28,6 @@ export class GroupsController {
         }
 
         this.groups = result;
-
-        
-
         this.isLoading = false;
         return;
     }

@@ -11,7 +11,7 @@ public class Answer
     public Answer(
         Guid taskId,
         Guid studentId,
-        int mark,
+        int? mark,
         string? replyText,
         string answerText,
         DateTime dateSent,
@@ -29,7 +29,7 @@ public class Answer
     public Guid Id { get; set; }
     public Guid TaskId { get; set; }
     public Guid StudentId { get; set; }
-    public int Mark { get; set; }
+    public int? Mark { get; set; }
     public string? ReplyText { get; set; }
     public string AnswerText { get; set; }
     public DateTime DateSent { get; set; }
@@ -50,7 +50,7 @@ public class Answer
     public static Result<Answer, Error> Create(
         string taskId,
         string studentId,
-        int mark,
+        int? mark,
         string? replyText,
         string answerText,
         DateTime dateSent,
@@ -69,7 +69,7 @@ public class Answer
             return checkGuidResult.Error;
         }
         
-        if (int.IsNegative(mark))
+        if (mark < 0)
         {
             return Errors.Errors.General.ValueIsInvalid("mark");
         }

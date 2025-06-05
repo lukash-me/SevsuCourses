@@ -7,22 +7,9 @@
 //   },
 // })
 
-const { VueLoaderPlugin } = require('vue-loader');
-
 module.exports = {
   devServer: {
-    hot: false,
-    liveReload: false
+    hot: true,
+    liveReload: true
   },
-  module: {
-    rules: [
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader'
-      },
-    ]
-  },
-  plugins: [
-    new VueLoaderPlugin()
-  ],
 };

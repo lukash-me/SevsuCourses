@@ -56,7 +56,7 @@ public class GetBestAnswersToThemeService
 public record BestAnswerInfo(
     string Title,
     string Status,
-    int BestMark,
+    int? BestMark,
     DateTime DateSent,
     DateTime? DateReplied
     );

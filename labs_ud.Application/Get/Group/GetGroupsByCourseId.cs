@@ -16,6 +16,11 @@ public class GetGroupsByCourseId
     public async Task<Result<GroupsResponse, Error>> Handle(Guid CourseId, CancellationToken cancellationToken = default)
     {
         var groupsResult = await _groupRepository.GetByCourseId(CourseId, cancellationToken);
+
+        if (groupsResult.IsFailure)
+        {
+            return groupsResult.Error;
+        }
         
         var groupIds = groupsResult.Value.Select(x => x.Id).ToList();
         var response = new GroupsResponse(groupIds);

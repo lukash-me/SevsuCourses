@@ -10,6 +10,16 @@ export function logIfFailure(controller) {
     }
 }
 
+export function logIfFailureExcept404(controller) {
+    if (controller.errors.length != 0 && controller.errors[0].code != "record.not.found") {
+        console.log("Have Errors", controller.errors);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 export function isFailure(result) {
     if (typeof result === "object" && "errors" in result) {
         return true;

@@ -4,7 +4,6 @@ import coursesPage from './Courses.vue';
 import themesPage from './Themes.vue';
 import taskPage from './Task.vue';
 import groupsPage from './Groups.vue';
-import testCreating from './TestCreating.vue';
 import adminPage from './Admin.vue';
 
 const routes = [
@@ -27,11 +26,6 @@ const routes = [
         path: '/task-page',
         name: 'taskPage',
         component: taskPage,
-    },
-    {
-        path: '/test-creating',
-        name: 'testCreating',
-        component: testCreating,
     },
     {
         path: '/groups-page',

@@ -47,7 +47,7 @@ public class GetStatusBestMarkDatesByStudentIdTaskIdService
 
 public record AnswerSuccessResponse(
     string Status,
-    int BestMark,
+    int? BestMark,
     DateTime DateSent,
     DateTime? DateReplied
     );

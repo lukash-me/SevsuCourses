@@ -24,6 +24,7 @@ public class GetAllAnswersByStudentIdTaskIdService
         var answers = answerResult.Value;
 
         var response = new List<AnswerResponse>();
+        
         foreach (var answer in answers)
         {
             var id = answer.Id;
@@ -43,7 +44,7 @@ public class GetAllAnswersByStudentIdTaskIdService
 
 public record AnswerResponse(
     Guid Id,
-    int Mark,
+    int? Mark,
     string? ReplyText,
     string AnswerText,
     DateTime DateSent,

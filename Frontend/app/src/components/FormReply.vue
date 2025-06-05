@@ -72,4 +72,24 @@
 <style>
     @import "../assets/styles/forms.css";
     @import "../assets/styles/buttons.css";
+
+    .btns-form-container {
+
+        margin-top: 40px;
+        margin-bottom: 40px;
+        position: relative;
+        align-self: center;
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+    }
+
+    h1 {
+    font-size: 3rem;
+    }
+
+    h2 {
+        font-size: 2rem;
+    }
+
 </style>

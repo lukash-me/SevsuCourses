@@ -1,19 +1,23 @@
 <template>
-    <div v-if="haveNoRightsModal" class="overlay">
-        <div class="delete-confirm" id="rights">
-            <div class="text-modal">
-                <span>У вас<span class="red-font"> нет прав</span> для</span>
-                <span> <b>выполнения</b> данного действия</span>
-            </div>
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeNoRightsModal">Увы</button>
-            </div>
-        </div>
-    </div>
-    <div></div>
+
+    <NoRightsModal v-if="isNoRightsModalOpen" 
+        @close="() => isNoRightsModalOpen=false"
+    />
+
+    <DeleteCourseConfirm v-if="isDeleteConfirmOpen"
+        @close="() => isDeleteConfirmOpen=false"
+        @delete="removeCourse"
+    />
+
+    <FormCourse v-if="isCourseModalOpen"
+        :form="courseForm"
+        @close="() => isCourseModalOpen=false"
+        @submit="doCourseCreateOrUpdate"
+    />
+
     <div class="container">
         <div class="course-add-card">
-            <div class="add-button" @click="openFormModal">Добавить курс
+            <div class="add-button" @click="openCourseForm($event, null)">Добавить курс
                 <img src="images/add.jpg" alt="">
             </div>
         </div>
@@ -27,8 +31,8 @@
                 >
                 <div class="image">
                     <img :src="course.photo" alt="Course Image"/>
-                    <div class="edit-btn" @click="editCourse($event, course.id)">Редактировать</div>
-                    <div class="delete-btn" @click="toDeleteCourse($event, course.id)">Удалить</div>
+                    <div class="edit-btn" @click="openCourseForm($event, course.id)">Редактировать</div>
+                    <div class="delete-btn" @click="deleteCourse($event, course.id)">Удалить</div>
                 </div>
                 <div class="card-text">
                     <h1>{{ course.title }}</h1>
@@ -38,117 +42,52 @@
         </div>
     </div>
 
-    <div v-if="isModalFormOpen" class="overlay">
-        <form class="course-edit-form" @submit.prevent="handleSubmit" novalidate>
-            
-            <h1>Курс</h1>
-            
-
-            <div class="field">
-                <span>Изображение</span>
-                <input 
-                id="image"
-                v-model="form.image"
-                type="text"
-                class="box"
-                placeholder="Укажите название изображения.."
-                aria-errormessage="image-errors"
-                title=""
-                />
-                <span class="field__errors" id="image-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Название*</span>
-                <input
-                id="title"
-                v-model="form.title"
-                type="text" 
-                class="box"
-                placeholder="Введите название.."
-                aria-errormessage="title-errors"
-                title=""
-                required
-                />
-                <span class="field__errors" id="title-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Описание</span>
-                <textarea
-                id="description"
-                v-model="form.description"
-                type="text" 
-                class="box"
-                placeholder="Краткое описание того, что ждет студента на курсе.."
-                aria-errormessage="description-errors"
-                title=""></textarea>
-                <span class="field__errors" id="description-errors"></span>
-            </div>
-
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeFormModal">Отменить</button>
-                <button class="save-btn" @click="saveCourse">Сохранить</button>
-            </div>
-        </form>
-    </div>
-
-    <div v-if="isModalDeleteInfoOpen" class="overlay">
-        <div class="delete-confirm">
-            <div class="text-modal">
-                <span>Вы <b>уверены</b>, что хотите</span>
-                <span><span class="red-font">удалить</span> выбранный курс?</span>
-            </div>
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeDeleteModal">Вернуться</button>
-                <button class="delete-btn-big" @click="removeCourse">Удалить</button>
-            </div>
-        </div>
-    </div>
-
-    
 </template>
 
 <script>
 import { useRouter } from 'vue-router';
-import { reactive, ref } from 'vue';
-import { logResultIfFailure, getRole, getId } from '@/utils/shared/shared'
-import { getCourseInfo, createCourse, updateCourseInfo, getAllCourses } from '@/utils/requests/courses'
+import { ref } from 'vue';
+import { getRole, getId } from '@/utils/shared/shared'
+import { getCourseInfo, createCourse, updateCourseInfo, getAllCourses, deleteCourse } from '@/utils/requests/courses'
+import { URL_IMG_COURSE_ADD_CARD_DEFAULT } from '@/constants'
+
+import NoRightsModal from '@/components/NoRightsModal.vue';
+import DeleteCourseConfirm from '@/components/DeleteCourseConfirm.vue';
+import FormCourse from '@/components/FormCourse.vue';
+
+//import { openModal, closeModal } from '@/utils/modals/modals';
 
 export default {
     name: 'CoursesPage',
 
+    components: {
+        NoRightsModal,
+        DeleteCourseConfirm,
+        FormCourse
+    },
+
     setup() {
         const router = useRouter();
-        const courseImage = '/images/add.jpg';
-        let isModalFormOpen = ref(false);
-        let isModalDeleteInfoOpen = ref(false); 
-        const form = reactive({
+        const courseImage = URL_IMG_COURSE_ADD_CARD_DEFAULT;
+        const isNoRightsModalOpen = ref(false);
+        const isCourseModalOpen = ref(false);
+        const isDeleteConfirmOpen = ref(false);
+
+        const courseForm = ref({
             courseId: null,
-            image: null,
+            photo: null,
             title: null,
-            description: null,
-            method: null
+            description: null
         });
 
-        let haveNoRightsModal = ref(false);
-
-        function openNoRightsModal(){
-            haveNoRightsModal.value = true;
-        }
-
-        function closeNoRightsModal(){
-            haveNoRightsModal.value = false;
-        }
-
-        return { router, 
+        return { 
+            router, 
             courseImage, 
-            isModalFormOpen, 
-            isModalDeleteInfoOpen, 
-            form,
-            haveNoRightsModal,
-            openNoRightsModal,
-            closeNoRightsModal};
+            isCourseModalOpen, 
+            isDeleteConfirmOpen, 
+            courseForm,
+            isNoRightsModalOpen,
+        };
     },
 
     data() {
@@ -168,9 +107,6 @@ export default {
         async showAllCourses() {
 
             const coursesResult = await getAllCourses();
-            // if (logResultIfFailure(coursesResult)) {
-            //     return;
-            // }
 
             let inRow = 1;
             let cardsRow = [];
@@ -197,96 +133,110 @@ export default {
             });
         },
 
-        async editCourse(event, courseId) {
-            event.stopPropagation(event);
+        async createCourse() {
 
-            if (getRole() != "Teacher" && getRole() != "Admin"){
-                this.openNoRightsModal();
+            const request = {
+                teacherId: getId(),
+                photo: this.courseForm.photo,
+                title: this.courseForm.title,
+                description: this.courseForm.description
+            }
+
+            const result = await createCourse(request);
+
+            console.log("Курс успешно добавлен:", result);
+
+            const course = {
+                id: result,
+                image: request.photo,
+                title: request.title,
+                description: request.description
+            };
+
+            this.isCourseModalOpen = false;
+            this.addCard(course);
+        },
+
+        updateCourseForm(form) {
+
+            this.courseForm.photo = form.photo;
+            this.courseForm.title = form.title;
+            this.courseForm.description = form.description;
+        },
+
+        async fillCourseForm(courseId) {
+
+            const courseInfoResult = await getCourseInfo(courseId);
+
+            this.courseForm.courseId = courseId;
+            this.courseForm.photo = courseInfoResult.photo;
+            this.courseForm.title = courseInfoResult.title;
+            this.courseForm.description = courseInfoResult.description;
+        },
+
+        async openCourseForm(event, courseId) {
+            event.stopPropagation();
+
+            if (getRole() != "Teacher" && getRole() != "admin"){
+                this.isNoRightsModalOpen = true;
                 return;
             }
 
-            const courseInfoResult = await getCourseInfo(courseId);
+            this.courseForm.id = courseId;
 
-            // if (logResultIfFailure(courseInfoResult)) {
-            //     return;
-            // }
-
-            this.form.courseId = courseId;
-            this.form.image = courseInfoResult.photo;
-            this.form.title = courseInfoResult.title;
-            this.form.description = courseInfoResult.description;
-            this.form.method = "PUT";
-
-            this.openFormModal();
-        },
-
-        async saveCourse() {
+            if (courseId) {
+                await this.fillCourseForm(courseId);
+            }
             
-            if (this.form.method === "PUT") {
-
-                const request = {
-                    photo: this.form.image,
-                    title: this.form.title,
-                    description: this.form.description
-                }
-
-                const courseId = this.form.courseId;
-
-                const resultCourseInfo = await updateCourseInfo(courseId, request);
-
-                // if (logResultIfFailure(resultCourseInfo)) {
-                //     return;
-                // }
-                
-                console.log("Курс успешно изменен", resultCourseInfo);
-
-                this.closeFormModal();
-                await this.refreshCard();
-            }
-            else {
-
-                const request = {
-                    teacherId: getId(),
-                    photo: this.form.image,
-                    title: this.form.title,
-                    description: this.form.description
-                }
-
-                const result = await createCourse(request);
-
-                if (logResultIfFailure(result)) {
-                    return;
-                }
-
-                console.log("Курс успешно добавлен:", result);
-
-                const course = {
-                    id: result,
-                    image: request.photo,
-                    title: request.title,
-                    description: request.description
-                };
-
-                this.closeFormModal();
-                this.addCard(course);
-            }
+            this.isCourseModalOpen = true;
         },
 
-        async refreshCard() {
+        async doCourseCreateOrUpdate(form) {
 
-            const courseId = this.form.courseId;
-            const courseInfoResult = await getCourseInfo(courseId);
+            if (form instanceof Event) {
+                return;
+            }
 
-            // if (logResultIfFailure(courseInfoResult)) {
-            //     return;
-            // }
+            this.updateCourseForm(form);
+
+            if (this.courseForm.id) {
+                await this.updateCourse();
+                this.clearCourseForm();
+                return;
+            }
+
+            await this.createCourse();
+            this.clearCourseForm();
+            return;
+        },
+
+        async updateCourse() {
+
+            const request = {
+                photo: this.courseForm.photo,
+                title: this.courseForm.title,
+                description: this.courseForm.description
+            }
+
+            const courseId = this.courseForm.courseId;
+            const resultCourseInfo = await updateCourseInfo(courseId, request);
+            
+            console.log("Курс успешно изменен", resultCourseInfo);
+
+            this.isCourseModalOpen = false;
+            await this.refreshCard(request);
+        },
+
+        async refreshCard(request) {
+
+            const courseId = this.courseForm.courseId;
             
             const updatedCourse = {
                 "id": courseId,
-                "title": courseInfoResult.title,
-                "image": courseInfoResult.photo,
-                "description": courseInfoResult.description
-            } 
+                "title": request.title,
+                "image": request.photo,
+                "description": request.description
+            }
 
             this.courseRows = this.courseRows.map(row =>
                 row.map(course => 
@@ -305,66 +255,42 @@ export default {
             }
         },
 
-        toDeleteCourse(event, id) {
+        deleteCourse(event, id) {
 
             event.stopPropagation();
 
             if (getRole() != "Teacher" && getRole() != "admin"){
-                this.openNoRightsModal();
+                this.isNoRightsModalOpen = true;
                 return;
             }
 
-            this.form.courseId = id;
-
-            this.openDeleteModal(event);
+            this.courseForm.courseId = id;
+            this.isDeleteConfirmOpen = true;
         },
 
         async removeCourse() {
 
-            const courseId = this.form.courseId;
-            const result = await this.deleteCourse(courseId);
-
-            // if (logResultIfFailure(result)) {
-            //     return;
-            // }
+            const courseId = this.courseForm.courseId;
+            const result = await deleteCourse(courseId);
 
             console.log("Курс успешно удален:", result);
 
-            this.closeDeleteModal();
+            this.isDeleteConfirmOpen = false;
 
             this.courseRows = this.courseRows.map(row =>
                 row.filter(course => course.id !== courseId)
             );
+
+            this.clearCourseForm();
         },
 
-        openFormModal() {
+        clearCourseForm() {
 
-            if (getRole() != "Teacher" && getRole() != "Admin"){
-                this.openNoRightsModal();
-                return;
-            }
-
-            this.isModalFormOpen = true;
+            this.courseForm.courseId = null;
+            this.courseForm.photo = null;
+            this.courseForm.title = null;
+            this.courseForm.description = null;
         },
-
-        closeFormModal() {
-
-            this.form.courseId = null;
-            this.form.image = null;
-            this.form.title = null;
-            this.form.description = null;
-
-            this.isModalFormOpen = false;
-        },
-
-        openDeleteModal() {
-
-            this.isModalDeleteInfoOpen = true;
-        },
-
-        closeDeleteModal() {
-            this.isModalDeleteInfoOpen = false;
-        }
     },
 };
 
@@ -372,23 +298,6 @@ export default {
 </script>
 
 <style scoped>
-
-.container {
-    display: flex;
-    
-    width: 90%;
-    gap: 10px;
-    flex-wrap: wrap;
-
-    margin: 0 auto;
-    margin-top: 10rem;
-}
-
-.btns-container {
-        margin-top: 15px;
-        display: flex;
-        gap: 35px;
-    }
 
 .add-button {
     background: #fff;

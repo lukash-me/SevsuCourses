@@ -6,7 +6,7 @@
                 <span> <b>выполнения</b> данного действия</span>
             </div>
             <div class="btns-container">
-                <button class="cancel-btn" @click="$emit('close');">Увы</button>
+                <button class="cancel-btn" @click="$emit('close')">Увы</button>
             </div>
         </div>
     </div>

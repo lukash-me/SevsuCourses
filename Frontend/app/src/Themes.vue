@@ -1,26 +1,36 @@
 <template>
 
-    <div v-if="haveNoRightsModal" class="overlay">
-        <div class="delete-confirm" id="rights">
-            <div class="text-modal">
-                <span>У вас<span class="red-font"> нет прав</span> для</span>
-                <span> <b>выполнения</b> данного действия</span>
-            </div>
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeNoRightsModal">Увы</button>
-            </div>
-        </div>
-    </div>
-    <div class="course-title">
-        <span>{{ courseTitle }}</span>
-    </div>
+    <FormTheme v-if="isThemeModalOpen"
+        :form="themeForm"
+        @close="() => isThemeModalOpen=false"
+        @submit="doThemeCreateOrUpdate"
+    />
+
+    <FormTask v-if="isTaskModalOpen"
+        :form="taskForm"
+        @close="() => isTaskModalOpen=false"
+        @submit="createTask"
+    />
+
+    <NoRightsModal v-if="isNoRightsModalOpen"
+        @close="() => isNoRightsModalOpen=false"/>
+
+    <DeleteThemeConfirm v-if="isDeleteThemeConfirmOpen"
+        @close="() => isDeleteThemeConfirmOpen=false"
+        @delete="removeTheme"
+    />
+
+    <DeleteTaskConfirm v-if="isDeleteTaskConfirmOpen"
+        @close="() => isDeleteTaskConfirmOpen=false"
+        @delete="removeTask"
+    />
 
     <div v-for="theme in themes" :key="theme.id" class="container">
         <div class="theme-title">
             <h2>{{ theme.title }}</h2>
             <div class="theme-btns-container">
-                <div class="edit-btn" @click="toEditTheme(theme.id)">Редактировать</div>
-                <div class="delete-btn" @click="toDeleteTheme(theme.id)">Удалить</div>
+                <div class="edit-btn" @click="openThemeForm(theme.id)">Редактировать</div>
+                <div class="delete-btn" @click="deleteTheme(theme.id)">Удалить</div>
             </div>
         </div>
       
@@ -29,7 +39,6 @@
       </div>
         <p class="theme-text">{{ theme.text }}</p>
       
-
       <div class="tasks">
         <div 
           v-for="(task, index) in theme.tasks" 
@@ -38,203 +47,44 @@
           @click="goToTask(task.id)"
         >
           <span>Задача №{{ index + 1 }} - {{ task.title }}</span>
-          <button class="delete-btn" @click="toDeleteTask($event, task.id)">Удалить</button>
+          <button class="delete-btn" @click="deleteTask($event, task.id)">Удалить</button>
         </div>
-        <button class="add-task-btn" @click="toCreateTask(theme.id)">Добавить задачу</button>
-      </div>
-    </div>
-
-    <div v-if="isModalFormOpen" class="overlay">
-        <formTheme class="theme-edit-formTheme" @submit.prevent="handleSubmit" novalidate>
-            
-            <h1>Тема</h1>
-            
-
-            <div class="field">
-                <span>Изображение</span>
-                <input 
-                id="image"
-                v-model="formTheme.image"
-                type="text"
-                class="box"
-                placeholder="Укажите название изображения.."
-                aria-errormessage="image-errors"
-                title=""
-                />
-                <span class="field__errors" id="image-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Название*</span>
-                <input
-                id="title"
-                v-model="formTheme.title"
-                type="text" 
-                class="box"
-                placeholder="Введите название.."
-                aria-errormessage="title-errors"
-                title=""
-                required
-                />
-                <span class="field__errors" id="title-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Основной текст</span>
-                <textarea
-                id="description"
-                v-model="formTheme.description"
-                type="text" 
-                class="box"
-                placeholder="Текст темы.."
-                aria-errormessage="description-errors"
-                title=""></textarea>
-                <span class="field__errors" id="description-errors"></span>
-            </div>
-
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeForm">Отменить</button>
-                <button class="save-btn" @click="saveTheme">Сохранить</button>
-            </div>
-        </formTheme>
-    </div>
-
-    <div v-if="isModalDeleteInfoOpen" class="overlay">
-        <div class="delete-confirm">
-            <div class="text-modal">
-                <span>Вы <b>уверены</b>, что хотите</span>
-                <span><span class="red-font">удалить</span> выбранную тему?</span>
-            </div>
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeDeleteModal">Вернуться</button>
-                <button class="delete-btn-big" @click="removeTheme">Удалить</button>
-            </div>
+            <button class="add-task-btn" @click="openTaskForm(theme.id)">Добавить задачу</button>
         </div>
     </div>
 
-    <div v-if="isModalDeleteTaskInfoOpen" class="overlay">
-        <div class="delete-confirm">
-            <div class="text-modal">
-                <span>Вы <b>уверены</b>, что хотите</span>
-                <span><span class="red-font">удалить</span> выбранную задачу?</span>
-            </div>
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeDeleteTaskModal">Вернуться</button>
-                <button class="delete-btn-big" @click="removeTask">Удалить</button>
-            </div>
-        </div>
-    </div>
-
-    <button class="add-theme-btn" @click="toCreateTheme">Добавить тему</button>
-
-    <div v-if="isModalFormTaskOpen" class="overlay">
-        <formTheme class="task-edit-formTheme" @submit.prevent="handleSubmit" novalidate>
-            
-            <h1>Задача</h1>
-            
-
-            <div class="field">
-                <span>Изображение</span>
-                <input 
-                id="image"
-                v-model="formTask.image"
-                type="text"
-                class="box"
-                placeholder="Укажите название изображения.."
-                aria-errormessage="image-errors"
-                title=""
-                />
-                <span class="field__errors" id="image-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Название*</span>
-                <input
-                id="title"
-                v-model="formTask.title"
-                type="text" 
-                class="box"
-                placeholder="Введите название.."
-                aria-errormessage="title-errors"
-                title=""
-                required
-                />
-                <span class="field__errors" id="title-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Условие задачи</span>
-                <textarea
-                id="description"
-                v-model="formTask.description"
-                type="text" 
-                class="box"
-                placeholder="Текст задачи.."
-                aria-errormessage="description-errors"
-                title=""></textarea>
-                <span class="field__errors" id="description-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Количество попыток</span>
-                <input
-                id="attemps"
-                v-model="formTask.attemps"
-                type="text" 
-                class="box"
-                placeholder="Введите число.."
-                aria-errormessage="attemps-errors"
-                title="">
-                <span class="field__errors" id="attemps-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Минимальная оценка для выполнения</span>
-                <input
-                id="minMark"
-                v-model="formTask.minMark"
-                type="text" 
-                class="box"
-                placeholder="Введите число.."
-                aria-errormessage="minMark-errors"
-                title="">
-                <span class="field__errors" id="minMark-errors"></span>
-            </div>
-
-            <div class="field">
-                <span>Максимальная оценка</span>
-                <input
-                id="maxMark"
-                v-model="formTask.maxMark"
-                type="text" 
-                class="box"
-                placeholder="Введите число.."
-                aria-errormessage="maxMark-errors"
-                title="">
-                <span class="field__errors" id="maxMark-errors"></span>
-            </div>
-
-            <div class="btns-container">
-                <button class="cancel-btn" @click="closeFormTask">Отменить</button>
-                <button class="save-btn" @click="saveTask">Сохранить</button>
-            </div>
-        </formTheme>
-    </div>
+    <button class="add-theme-btn" @click="openThemeForm(null)">Добавить тему</button>
 
 </template>
 
 <script>
-    import { reactive, ref } from 'vue';
+    import { ref } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import { URL_IMG_THEME_CARD_DEFAULT } from '@/constants'
     import { getRole } from '@/utils/shared/shared';
 
     import { getCourseTitleAndTeacher } from '@/utils/requests/courses';
     import { getAllThemes, getTheme, updateTheme, createTheme, deleteTheme } from '@/utils/requests/themes';
-    import { getTasksByTheme, createTask, deleteTask } from '@/utils/requests/tasks';
+    import { getTasksByTheme, createTask, deleteTask, getTask } from '@/utils/requests/tasks';
+
+    import FormTheme from '@/components/FormTheme.vue';
+    import NoRightsModal from '@/components/NoRightsModal.vue';
+    import DeleteThemeConfirm from './components/DeleteThemeConfirm.vue';
+    import DeleteTaskConfirm from './components/DeleteTaskConfirm.vue';
+    import FormTask from './components/FormTask.vue';
  
     export default {
-            name: "ThemesPage",
+
+        name: "ThemesPage",
+
+        components: {
+            FormTheme,
+            NoRightsModal,
+            DeleteThemeConfirm,
+            DeleteTaskConfirm,
+            FormTask
+        },
+
         setup() {
             const courseTitle = ref('');
             const themes = ref([]);
@@ -242,52 +92,54 @@
             const router = useRouter();
             const themeImage = URL_IMG_THEME_CARD_DEFAULT;
 
-            let isModalFormOpen = ref(false);
-            let isModalDeleteInfoOpen = ref(false);
-            let isModalFormTaskOpen = ref(false);
-            let isModalDeleteTaskInfoOpen = ref(false);
+            const isThemeModalOpen = ref(false);
+            const isTaskModalOpen = ref(false);
 
-            let haveNoRightsModal = ref(false);
+            const isDeleteThemeConfirmOpen = ref(false);
+            const isDeleteTaskConfirmOpen = ref(false);
 
-            function openNoRightsModal(){
-                haveNoRightsModal.value = true;
-            }
+            const isNoRightsModalOpen = ref(false);
 
-            function closeNoRightsModal(){
-                haveNoRightsModal.value = false;
-            }
-
-            const formTheme = reactive({
-                themeId: null,
-                image: null,
+            const themeForm = ref({
+                id: null,
+                photo: null,
                 title: null,
                 description: null,
-                method: null
             });
-            const formTask = reactive({
+
+            const taskForm = ref({
+                id: null,
                 themeId: null,
-                taskId: null,
-                image: null,
+                photo: null,
                 title: null,
-                description: null,
-                attemps: null,
+                condition: null,
                 minMark: null,
                 maxMark: null
-            })
+            });
 
-            return { haveNoRightsModal, openNoRightsModal, closeNoRightsModal, courseTitle, themes, route, router, themeImage, isModalFormOpen, isModalDeleteInfoOpen, isModalFormTaskOpen, isModalDeleteTaskInfoOpen, formTheme, formTask};
+            return { 
+                isNoRightsModalOpen, 
+                courseTitle, 
+                themes, 
+                route, 
+                router, 
+                themeImage, 
+                isThemeModalOpen,
+                isTaskModalOpen,
+                themeForm, 
+                taskForm,
+                isDeleteThemeConfirmOpen,
+                isDeleteTaskConfirmOpen,
+            };
         },
 
         async mounted() {
 
             const courseId = this.$route.query.id;
+
                 if (courseId) {
 
                     const courseTitleAndTeacherResult = await getCourseTitleAndTeacher(courseId);
-
-                    // if (logResultIfFailure(courseTitleAndTeacherResult)){
-                    //     return;
-                    // }
 
                     this.courseTitle = courseTitleAndTeacherResult.title;
 
@@ -300,6 +152,8 @@
 
         methods: {
 
+            // Themes
+
             async addTasksToThemes(themes) {
 
                 let result = [];
@@ -307,10 +161,6 @@
                 for (let i=0; i<themes.length; i++) {
 
                     const tasksResult = await getTasksByTheme(themes[i].id);
-
-                    // if (logResultIfFailure(tasksResult)) {
-                    //     return;
-                    // }
 
                     const theme = {
                         ...themes[i],
@@ -326,83 +176,134 @@
             async getThemes(courseId) {
 
                 const themesResult = await getAllThemes(courseId);
-
-                // if (logResultIfFailure(themesResult)) {
-                //     return;
-                // }
                 
                 const themes = await this.addTasksToThemes(themesResult);
                 this.themes = themes.sort((a, b) => a.number - b.number);
             },
 
-            goToTask(taskId) {
-                this.router.push({ 
-                    name: 'taskPage', 
-                    query: { id: taskId } 
-                });
+            async fillThemeForm() {
+
+                const themeId = this.themeForm.id;
+                const themeResult = await getTheme(themeId);
+
+                this.themeForm.photo = themeResult.photo;
+                this.themeForm.title = themeResult.title;
+                this.themeForm.description = themeResult.text;
             },
 
-            toCreateTheme() {
+            updateThemeForm(form) {
 
-                if (getRole() != "Teacher" && getRole() != "Admin"){
-                    this.openNoRightsModal();
+                this.themeForm.photo = form.photo;
+                this.themeForm.title = form.title;
+                this.themeForm.description = form.description;
+            },
+
+            clearThemeForm() {
+                this.themeForm.id = null;
+                this.themeForm.photo = null;
+                this.themeForm.title = null;
+                this.themeForm.description = null;
+            },
+
+            async openThemeForm(themeId) {
+                this.clearThemeForm();
+
+                if (getRole() != "Teacher" && getRole() != "admin"){
+                    this.isNoRightsModalOpen = true;
+                    return;
+                }
+                
+                if (themeId) {
+                    this.themeForm.id = themeId;
+                    await this.fillThemeForm();
+                }
+
+                this.isThemeModalOpen = true;
+            },
+
+            async doThemeCreateOrUpdate(form) {
+                if (form instanceof Event) {
                     return;
                 }
 
-                this.formTheme.image = URL_IMG_THEME_CARD_DEFAULT;
-                this.formTheme.title = null;
-                this.formTheme.description = null;
+                this.updateThemeForm(form);
 
-                this.isModalFormOpen = true;
+                if (this.themeForm.id) {
+                    await this.updateTheme();
+                    return;
+                }
+
+                await this.createTheme();
+                return;
             },
 
-            async saveTheme(){
+            async createTheme() {
+
+                // Условие, что фото не найдено
+                this.themeForm.photo = URL_IMG_THEME_CARD_DEFAULT;
 
                 const request = {
-                    photo: this.formTheme.image,
-                    title: this.formTheme.title,
-                    text: this.formTheme.description
+                    photo: this.themeForm.photo,
+                    title: this.themeForm.title,
+                    text: this.themeForm.description
                 }
 
-                const themeId = this.formTheme.themeId;
+                const courseId = this.route.query.id;
+                const result = await createTheme(courseId, request);
 
-                if (themeId == null) {
+                console.log("Тема успешно создана:", result);
 
-                    const result = await createTheme(request);
-                    
-                    // if (logResultIfFailure(result)) {
-                    //     return;
-                    // }
+                request.id = result;
+                this.themes.push(request);
 
-                    console.log("Тема успешно создана:", result);
+                this.isThemeModalOpen = false;
+            },
 
-                    request.id = result;
+            async updateTheme(){
 
-                    this.themes.push(request);
-                }
-                else {
-                    const result = await updateTheme(themeId, request);
-
-                    // if (logResultIfFailure(result)) {
-                    //     return;
-                    // }
-
-                    console.log("Тема успешно обновлена:", result);
-
-                    await this.refresh(request);
+                const request = {
+                    photo: this.themeForm.photo,
+                    title: this.themeForm.title,
+                    text: this.themeForm.description
                 }
 
-                this.closeForm();
+                const themeId = this.themeForm.id;
+                const result = await updateTheme(themeId, request);
+
+                console.log("Тема успешно обновлена:", result);
+
+                await this.refresh(request);
+                
+                this.isThemeModalOpen = false;
+            },
+
+            deleteTheme(themeId) {
+                this.clearThemeForm();
+
+                if (getRole() != "Teacher" && getRole() != "admin"){
+                    this.isNoRightsModalOpen = true;
+                    return;
+                }
+
+                this.themeForm.id = themeId;
+                this.isDeleteThemeConfirmOpen = true;
+            },
+
+            async removeTheme() {
+
+                const result = await deleteTheme(this.themeForm.id);
+
+                console.log("Тема успешно удалена:", result);
+
+                this.themes = this.themes.filter(theme => theme.id !== this.themeForm.id);
+
+                this.isDeleteThemeConfirmOpen = false;
             },
 
             async refresh() {
 
-                const themeId = this.formTheme.themeId;
+                const themeId = this.themeForm.id;
                 const themeResult = await getTheme(themeId);
-
-                // if (logResultIfFailure(themeResult)) {
-                //     return;
-                // }
 
                 const updatedTheme = {
                     "id": themeId,
@@ -412,137 +313,114 @@
                 }
 
                 this.themes = this.themes.map(theme =>
-                    theme.id === this.formTheme.themeId ? { ...theme, ...updatedTheme } : theme);
+                    theme.id === this.themeForm.id ? { ...theme, ...updatedTheme } : theme);
             },
 
-            closeForm() {
-                this.formTheme.themeId = null;
-                this.isModalFormOpen = false;
+            // Tasks
+
+            goToTask(taskId) {
+                this.router.push({ 
+                    name: 'taskPage', 
+                    query: { id: taskId } 
+                });
             },
 
-            closeFormTask() {
-                this.formTask.themeId = null;
-                this.isModalFormTaskOpen = false;
+            async fillTaskForm() {
 
-                this.formTask.title = null;
-                this.formTask.description = null;
-                this.formTask.attemps = null;
-                this.formTask.minMark = null;
-                this.formTask.maxMark = null;
+                const taskId = this.taskForm.id;
+                const tasksResult = await getTask(taskId);
+
+                this.taskForm.themeId = tasksResult.themeId;
+                this.taskForm.photo = tasksResult.photo;
+                this.taskForm.title = tasksResult.title;
+                this.taskForm.condition = tasksResult.condition;
+                this.taskForm.minMark = tasksResult.minMark;
+                this.taskForm.maxMark = tasksResult.maxMark;
             },
 
-            async toEditTheme(themeId) {
+            updateTaskForm(form) {
+
+                this.taskForm.photo = form.photo;
+                this.taskForm.title = form.title;
+                this.taskForm.condition = form.condition;
+                this.taskForm.minMark = form.minMark;
+                this.taskForm.maxMark = form.maxMark;
+            },
+
+            clearTaskForm() {
+                this.taskForm.id = null;
+                this.taskForm.themeId = null;
+                this.taskForm.photo = null;
+                this.taskForm.title = null;
+                this.taskForm.condition = null;
+                this.taskForm.minMark = null;
+                this.taskForm.maxMark = null;
+            },
+
+            async openTaskForm(themeId) {
+                this.clearTaskForm();
 
                 if (getRole() != "Teacher" && getRole() != "admin"){
-                    this.openNoRightsModal();
+                    this.isNoRightsModalOpen = true;
                     return;
                 }
 
-                this.formTheme.themeId = themeId;
-                const result = await getTheme(themeId);
-
-                // if (typeof result === "object" && "errors" in result) {
-                //     console.log("Have Errors", result.errors);
-                //     return
-                // }
-
-                this.formTheme.title = result.title;
-                this.formTheme.image = result.photo;
-                this.formTheme.description = result.text;
-
-                this.isModalFormOpen = true;
+                this.taskForm.themeId = themeId;
+                this.isTaskModalOpen = true;
             },
 
-            toDeleteTheme(themeId) {
-
-                if (getRole() != "Teacher" && getRole() != "Admin"){
-                    this.openNoRightsModal();
+            async createTask(form) {
+                if (form instanceof Event) {
                     return;
                 }
-
-                this.formTheme.themeId = themeId;
-                this.isModalDeleteInfoOpen = true;
-            },
-
-            closeDeleteModal() {
-                this.formTheme.themeId = null;
-                this.isModalDeleteInfoOpen = false;
-            },
-
-            async removeTheme() {
-
-                const result = await deleteTheme(this.formTheme.themeId);
-
-                // if (logResultIfFailure(result)) {
-                //     return;
-                // }
-
-                console.log("Тема успешно удалена:", result);
-
-                this.themes = this.themes.filter(theme => theme.id !== this.formTheme.themeId);
-
-                this.closeDeleteModal()
-            },
-
-            toCreateTask(themeId) {
-
-                if (getRole() != "Teacher" && getRole() != "admin"){
-                    this.openNoRightsModal();
-                    return;
-                }
-
-                this.isModalFormTaskOpen = true;
-                this.formTask.themeId = themeId;
-            },
-
-            async saveTask(){
+                
+                this.updateTaskForm(form);
+                this.taskForm.photo = URL_IMG_THEME_CARD_DEFAULT;
 
                 const request = {
-                    themeId: this.formTask.themeId,
-                    title: this.formTask.title,
-                    condition: this.formTask.description,
-                    attempsAmount: this.formTask.attemps,
-                    minMark: this.formTask.minMark,
-                    maxMark: this.formTask.maxMark
+                    themeId: this.taskForm.themeId,
+                    photo: this.taskForm.photo,
+                    title: this.taskForm.title,
+                    condition: this.taskForm.condition,
+                    minMark: this.taskForm.minMark,
+                    maxMark: this.taskForm.maxMark,
+                    attempsAmount: this.taskForm.attemps
                 }
 
                 const result = await createTask(request);
 
-                // if (logResultIfFailure(result)) {
-                //     return;
-                // }
-
                 console.log("Задача успешно создана:", result);
 
+                const taskMainInfo = {
+                    id: result,
+                    title: request.title
+                }
+
                 this.themes = this.themes.map(theme =>
-                    theme.id === this.formTask.themeId ? { ...theme, tasks: [...theme.tasks, request] } : theme
+                    theme.id === this.taskForm.themeId ? { ...theme, tasks: [...(theme.tasks || []), taskMainInfo] } : theme
                 );
-                
-                this.closeFormTask();
+
+                this.isTaskModalOpen = false;
             },
 
-            toDeleteTask(event, taskId) {
-
+            deleteTask(event, taskId) {
                 event.stopPropagation(event);
 
+                this.clearTaskForm();
+
                 if (getRole() != "Teacher" && getRole() != "admin"){
-                    this.openNoRightsModal();
+                    this.isNoRightsModalOpen = true;
                     return;
                 }
 
-                this.formTask.taskId = taskId;
-                this.isModalDeleteTaskInfoOpen = true;
+                this.taskForm.id = taskId;
+                this.isDeleteTaskConfirmOpen = true;
             },
 
             async removeTask() {
 
-                const taskId = this.formTask.taskId;
-
+                const taskId = this.taskForm.id;
                 const result = await deleteTask(taskId);
-
-                // if (logResultIfFailure(result)) {
-                //     return;
-                // }
 
                 console.log("Задача успешно удалена:", result);
 
@@ -551,13 +429,8 @@
                     tasks: theme.tasks.filter(task => task.id !== taskId)
                 }));
 
-                this.closeDeleteTaskModal()
+                this.isDeleteTaskConfirmOpen = false;
             },
-
-            closeDeleteTaskModal(){
-                this.formTask.taskId = null;
-                this.isModalDeleteTaskInfoOpen = false;
-            }
         }
     };
 
@@ -593,7 +466,7 @@
 
     .container {
         width: 100%;
-        height: 900px;
+        min-height: 900px;
         border: 2px solid white;
         display: flex;
         flex-direction: column;

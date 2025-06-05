@@ -1,6 +1,7 @@
 <template>
 
-  <NoRightsModal v-if="haveNoRightsModal==true" @close="haveNoRightsModal=false"/>
+  <NoRightsModal v-if="isNoRightsModalOpen==true" 
+    @close="() => isNoRightsModalOpen=false"/>
 
     <div>
         <div class="block">
@@ -8,7 +9,7 @@
 
         
             <div class="img-container">
-            <img src="/images/themes_01.jpg" alt="Theme Image" />
+              <img src="/images/themes_01.jpg" alt="Theme Image" />
             </div>
 
             <!-- лоадер добавить -->
@@ -33,19 +34,18 @@
             </div>
 
             <div id="answer" class="container">
-            <h2>Ответ студента</h2>
-            <span>{{ answer.answerText }}</span>
-            <div class="status"></div>
+              <h2>Ответ студента</h2>
+              <span>{{ answer.answerText }}</span>
+              <div class="status"></div>
             </div>
 
-
             <div class="btns-container">
-              <button class="btn" @click="openMarkModal">Оценить работу</button>
+              <button class="btn" @click="openReplyModal">Оценить работу</button>
             </div>
 
             <div class="container">
-            <h2>Ответ ментора</h2>
-            <span>{{ answer ? answer.replyText : "loading..." }}</span>
+              <h2>Ответ ментора</h2>
+              <span>{{ answer ? answer.replyText : "loading..." }}</span>
             </div>
 
             <div class="btns-container">
@@ -53,32 +53,19 @@
             </div>
 
             <!-- Модальное окно ответа студента -->
-            <div v-if="showAnswerModal" class="overlay">
-              <form class="answer-send-form" @submit.prevent="handleSubmit" novalidate>
-
-                <h1>Отправить ответ</h1>
-
-                <div class="field">
-                  <span>Введите текст ответа</span>
-                  <textarea v-model="form.answerText"
-                  class="box"
-                  ></textarea>
-                </div>
-                
-                <div class="btns-form-container">
-                  <button class="cancel-btn" @click="closeAnswerModal">Вернуться</button>
-                  <button class="save-btn" @click="sendAnswer">Отправить</button>
-                </div>
-              </form>
-            </div>
+             <FormAnswer v-if="isAnswerModalOpen"
+              :form="formAnswer"
+              @submit="sendAnswer"
+              @close="() => isAnswerModalOpen=false"
+             />
+            
 
             <!-- Модальное окно ответа ментора -->
-
-            <FormReply v-if="isMarkModalOpen" 
+            <FormReply v-if="isReplyModalOpen" 
               :answer="answer"
-              :form="formMark"
+              :form="formReply"
               @submit="sendReply" 
-              @close="isMarkModalOpen=false" 
+              @close="() => isReplyModalOpen=false"
             />
         </div>
     </div>
@@ -90,6 +77,7 @@ import { useRoute, useRouter } from "vue-router";
 
 import NoRightsModal from '@/components/NoRightsModal.vue';
 import FormReply from '@/components/FormReply.vue';
+import FormAnswer from '@/components/FormAnswer.vue'
 
 import { TasksController } from '@/controllers/tasksController';
 import { ThemesController } from '@/controllers/themesController';
@@ -99,16 +87,16 @@ import { SolutionsController } from '@/controllers/solutionsController';
 import { GroupsController } from '@/controllers/groupsController';
 
 import { STUDENT_ANSWER_NOT_FOUND, MENTOR_REPLY_NOT_FOUND } from '@/constants';
-import { openModal, closeModal } from '@/utils/modals/modals';
 
-import { getRole, getId, logIfFailure } from '@/utils/shared/shared';
+import { getRole, getId, logIfFailure, logIfFailureExcept404 } from '@/utils/shared/shared';
 
 export default {
   name: "TaskPage",
 
   components: {
     NoRightsModal,
-    FormReply
+    FormReply,
+    FormAnswer
   },
 
   setup() {
@@ -119,28 +107,25 @@ export default {
     const solutionsController = new SolutionsController();
     const groupsController = new GroupsController();
 
-    const answer = ref({});
+    const answer = ref({}); // Сейчас один, но в будущем несколько с пагинацией
 
     // model. ToDo: Сделать маппинг в нужный формат
     const task = ref({});
     const theme = ref({});
-    //const answer = ref({}); // Сейчас один, но в будущем несколько с пагинацией
-
-
 
     const route = useRoute();
     const router = useRouter();
     const activeStudent = ref({});
     const students = ref({});
-    const showAnswerModal = ref(false);
-    const isMarkModalOpen = ref(false);
-    let haveNoRightsModal = ref(false);
+    const isAnswerModalOpen = ref(false);
+    const isReplyModalOpen = ref(false);
+    const isNoRightsModalOpen = ref(false);
 
-    const form = reactive({
+    const formAnswer = reactive({
       answerText: null,
     });
 
-    const formMark = ref({});
+    const formReply = ref({});
 
     const goToThemes = async () => {
 
@@ -259,12 +244,17 @@ export default {
         await groupsController.loadMentorGroupsOnCourse(mentorId, courseId);
       }
 
-      if (logIfFailure(groupsController)) {
+      if (logIfFailureExcept404(groupsController)) {
         return;
       }
 
       const groups = groupsController.groups;
-      const groupIds = groups.groupIds;
+
+      let groupIds = null;
+
+      if (groups.length != 0) {
+        groupIds = groups.groupIds;
+      }
 
       const result = await getStudentsFromGroups(groupIds);
       return result;
@@ -281,7 +271,11 @@ export default {
       return result;
     }
 
-    async function getStudentsFromGroups(groupIds) {
+    async function  getStudentsFromGroups(groupIds) {
+
+      if (groupIds == null) {
+        return [];
+      }
 
       let students = [];
 
@@ -308,29 +302,22 @@ export default {
     function openAnswerModal() {
 
       if (getRole() != "Student" && getRole() != "Admin"){
-        // this.haveNoRightsModal = true;
-        console.log(haveNoRightsModal);
-        openModal(haveNoRightsModal);
+        openModal(isNoRightsModalOpen);
         return
       }
 
-      showAnswerModal.value = true;
-
-      form.answerText = answer.value.answerText;
+      openModal(isAnswerModalOpen);
+      formAnswer.answerText = answer.value.answerText;
     }
 
-    function closeAnswerModal() {
-      showAnswerModal.value = false;
-    }
-
-    async function openMarkModal() {
+    async function openReplyModal() {
 
       if (getRole() != "Mentor" & getRole() != "Admin"){
-        openModal(haveNoRightsModal);
+        openModal(isNoRightsModalOpen);
         return
       }
 
-      if (answer.value.id === null) {
+      if (answer.value.id === undefined) {
         console.log("Нельзя оценивать без ответа студента");
         return;
       }
@@ -345,28 +332,37 @@ export default {
 
       const solution = solutionsController.solutions[0];
 
-      formMark.value.solutionText = solution;
-      formMark.value.mark = answer.value.mark;
-      formMark.value.replyText = answer.value.replyText;
+      formReply.value.solutionText = solution;
+      formReply.value.mark = answer.value.mark;
+      formReply.value.replyText = answer.value.replyText;
 
-      isMarkModalOpen.value = true;
+      openModal(isReplyModalOpen);
     }
 
-    function closeMarkModal() {
-      isMarkModalOpen.value = false;
+    function closeModal(modalRef) {
+      modalRef.value = false;
     }
 
-    async function sendAnswer() {
+    function openModal(modalRef) {
+      modalRef.value = true;
+    }
+
+    async function sendAnswer(form) {
+
+      if (form instanceof Event) {
+        return;
+      }
 
       const taskId = route.query.id;
-      
-      const studentId = getId();
+      const studentId = activeStudent.value.id;
 
       const request = {
         taskId: taskId,
         studentId: studentId,
         answerText: form.answerText
       }
+
+      console.log(request)
 
       await answersController.createAnswer(request);
 
@@ -383,7 +379,7 @@ export default {
       answer.value = answersController.answers[0];
       answer.value.replyText = MENTOR_REPLY_NOT_FOUND;
 
-      this.closeAnswerModal();
+      closeModal(isAnswerModalOpen);
     }
 
     async function sendReply(form) {
@@ -407,7 +403,7 @@ export default {
 
       console.log("Добавлен ответ ментора. id", answersController.answers[0]);
 
-      closeMarkModal();
+      closeModal(isReplyModalOpen);
 
       await getAnswer(answersController, task.value.id, activeStudent.value.id);
 
@@ -455,33 +451,37 @@ export default {
       task,
       theme,
       answer,
-      form,
-      formMark,
       students,
-      route,
-      showAnswerModal,
-      isMarkModalOpen,
       activeStudent,
-      goToThemes,
-      haveNoRightsModal,
-      closeModal,
+      route,
+
+      formAnswer,
+      formReply,
+
       taskController,
       themesController,
       answersController,
       studentsController,
       solutionsController,
       groupsController,
+
+      goToThemes,
       getThemeByTask,
+      getStudents,
       setStudents,
       dropAttestFromStudents,
-      openAnswerModal,
-      sendAnswer,
-      openMarkModal,
-      closeAnswerModal,
-      getStudents,
-      sendReply,
-      closeMarkModal
       
+      openAnswerModal,
+      openReplyModal,
+      openModal,
+      closeModal,
+
+      isAnswerModalOpen,
+      isReplyModalOpen,
+      isNoRightsModalOpen,
+
+      sendReply,
+      sendAnswer,
     };
   },
 
@@ -518,7 +518,6 @@ h1 {
 h2 {
     font-size: 2rem;
 }
-
 
 .title {
     width: 100%;
@@ -591,17 +590,6 @@ h2 {
 
 .btns-container button{
     font-size: 18px;
-}
-
-.btns-form-container {
-
-  margin-top: 40px;
-  margin-bottom: 40px;
-  position: relative;
-  align-self: center;
-  display: flex;
-  justify-content: center;
-  gap: 30px;
 }
 
 .block .status {
