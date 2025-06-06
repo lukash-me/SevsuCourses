@@ -133,7 +133,7 @@ export default {
       if (id) {
         Cookies.set("id", id, { expires: 1, path: "/" });
         Cookies.set("role", endpoint, { expires: 1, path: "/" });
-        window.location.href = router.resolve({ name: 'coursesPage' }).href;
+        window.location.href = router.resolve({ name: 'coursesPage', query: { page: 0 } }).href;
       } 
       else {
         alert('Ошибка входа. Проверьте данные.');

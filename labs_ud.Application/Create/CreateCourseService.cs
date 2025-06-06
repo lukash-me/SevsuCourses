@@ -25,8 +25,10 @@ public class CreateCourseService
 
         var teacherId = request.TeacherId;
 
+        var dateCreated = DateTime.UtcNow;
+
         var courseResult = Course.Create(
-            teacherId, title, description, photo);
+            teacherId, title, description, photo, dateCreated);
 
         if (courseResult.IsFailure)
             return courseResult.Error;

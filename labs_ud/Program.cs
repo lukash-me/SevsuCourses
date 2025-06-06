@@ -43,6 +43,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
+    .AddScoped<GetPageService>()
     .AddScoped<GetGroupsByCourseId>()
     .AddScoped<GetGroupsByMentorIdAndCourseId>()
     .AddScoped<labs_ud.Application.Update.Teacher.UpdatePhoneService>()

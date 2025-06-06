@@ -15,32 +15,51 @@
         @submit="doCourseCreateOrUpdate"
     />
 
-    <div class="container">
-        <div class="course-add-card">
-            <div class="add-button" @click="openCourseForm($event, null)">Добавить курс
-                <img src="images/add.jpg" alt="">
-            </div>
-        </div>
-        <div v-for="(cardsRow, index) in courseRows" :key="index" class="cards-row">
-            <div
-                v-for="(course) in cardsRow"
-                :key="course.id"
-                class="course-card"
-                :data-id="course.id"
-                @click="goToCourse(course.id)"
-                >
-                <div class="image">
-                    <img :src="course.photo" alt="Course Image"/>
-                    <div class="edit-btn" @click="openCourseForm($event, course.id)">Редактировать</div>
-                    <div class="delete-btn" @click="deleteCourse($event, course.id)">Удалить</div>
-                </div>
-                <div class="card-text">
-                    <h1>{{ course.title }}</h1>
-                    <span>{{ course.description }}</span>
+    <div class="wrapper">
+        <div class="container">
+            <div class="course-add-card" v-if="router.currentRoute.value.query.page == 0">
+                <div class="add-button" @click="openCourseForm($event, null)">Добавить курс
+                    <img :src="URL_IMG_COURSE_ADD_CARD_DEFAULT" alt="">
                 </div>
             </div>
+            <div v-for="(cardsRow, index) in courseRows" :key="index" class="cards-row">
+                <div
+                    v-for="(course) in cardsRow"
+                    :key="course.id"
+                    class="course-card"
+                    :data-id="course.id"
+                    @click="goToCourse(course.id)"
+                    >
+                    <div class="image">
+                        <img :src="course.photo" 
+                            alt="Course Image"
+                            @error="event => event.target.src = URL_IMG_COURSE_CARD_DEFAULT"
+                        />
+                        <div class="edit-btn" @click="openCourseForm($event, course.id)">Редактировать</div>
+                        <div class="delete-btn" @click="deleteCourse($event, course.id)">Удалить</div>
+                    </div>
+                    <div class="card-text">
+                        <h1>{{ course.title }}</h1>
+                        <span>{{ course.description }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
+        <div class="page-selector">
+            <table>
+                <tbody>
+                    <tr>
+                        <td v-for="i in pagesAmount" :key="i" @click="changePage(i - 1)">
+                            {{ i }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <footer></footer>
     </div>
+    
+    
 
 </template>
 
@@ -48,8 +67,8 @@
 import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 import { getRole, getId } from '@/utils/shared/shared'
-import { getCourseInfo, createCourse, updateCourseInfo, getAllCourses, deleteCourse } from '@/utils/requests/courses'
-import { URL_IMG_COURSE_ADD_CARD_DEFAULT } from '@/constants'
+import { getCourseInfo, createCourse, updateCourseInfo, deleteCourse, getCoursesOnPage } from '@/utils/requests/courses'
+import { URL_IMG_COURSE_ADD_CARD_DEFAULT, URL_IMG_COURSE_CARD_DEFAULT } from '@/constants'
 
 import NoRightsModal from '@/components/NoRightsModal.vue';
 import DeleteCourseConfirm from '@/components/DeleteCourseConfirm.vue';
@@ -68,7 +87,6 @@ export default {
 
     setup() {
         const router = useRouter();
-        const courseImage = URL_IMG_COURSE_ADD_CARD_DEFAULT;
         const isNoRightsModalOpen = ref(false);
         const isCourseModalOpen = ref(false);
         const isDeleteConfirmOpen = ref(false);
@@ -82,7 +100,8 @@ export default {
 
         return { 
             router, 
-            courseImage, 
+            URL_IMG_COURSE_CARD_DEFAULT,
+            URL_IMG_COURSE_ADD_CARD_DEFAULT,
             isCourseModalOpen, 
             isDeleteConfirmOpen, 
             courseForm,
@@ -92,35 +111,54 @@ export default {
 
     data() {
         return {
-            courses: [],
             courseRows: [],
+            pagesAmount: 1
         };
     },
 
     async mounted() {
         
         await this.showAllCourses();
+        console.log(this.courseRows)
     },
 
     methods: {
 
         async showAllCourses() {
+            this.courseRows = [];
 
-            const coursesResult = await getAllCourses();
-
-            let inRow = 1;
+            const maxCardsInRow = 4;
+            const maxRows = 2;
             let cardsRow = [];
+
+            const pageNumber = this.router.currentRoute.value.query.page;
+
+            const coursesResult = await getCoursesOnPage(pageNumber);
+
+            // Todo Проверка
+
+            const courses = coursesResult.courses;
             
-            coursesResult.forEach((course) => {
-                if (inRow === 4) {
+            this.pagesAmount = coursesResult.pagesAmount;
+
+            let inRow = 0;
+
+            if (pageNumber == 0) {
+                inRow = 1;
+            }
+
+            for(let i=0; i<courses.length; i++) {
+                if (inRow === maxCardsInRow) {
                     this.courseRows.push(cardsRow);
                     cardsRow = [];
                     inRow = 0;
+                    if (this.courseRows.length==maxRows) {
+                        return;
+                    }
                 }
-                this.courseImage = course.photo;
-                cardsRow.push(course);
+                cardsRow.push(courses[i]);
                 inRow++;
-            });
+            }
             if (cardsRow.length > 0) {
                 this.courseRows.push(cardsRow);
             }
@@ -131,6 +169,10 @@ export default {
                 name: 'themesPage',
                 query: {id: courseId } 
             });
+        },
+
+        changePage(pageNumber) {
+            window.location.href = this.router.resolve({ name: 'coursesPage', query: { page: pageNumber } }).href;
         },
 
         async createCourse() {
@@ -146,15 +188,8 @@ export default {
 
             console.log("Курс успешно добавлен:", result);
 
-            const course = {
-                id: result,
-                image: request.photo,
-                title: request.title,
-                description: request.description
-            };
-
             this.isCourseModalOpen = false;
-            this.addCard(course);
+            this.showAllCourses();
         },
 
         updateCourseForm(form) {
@@ -244,17 +279,6 @@ export default {
             );
         },
 
-        // Отображение новой карточки на странице
-        async addCard(course) {
-
-            if (this.courseRows[this.courseRows.length - 1].length != 4) {                
-                this.courseRows[this.courseRows.length - 1].push(course);
-            }
-            else {
-                this.courseRows.push([course]);
-            }
-        },
-
         deleteCourse(event, id) {
 
             event.stopPropagation();
@@ -275,13 +299,11 @@ export default {
 
             console.log("Курс успешно удален:", result);
 
+            this.clearCourseForm();
+
             this.isDeleteConfirmOpen = false;
 
-            this.courseRows = this.courseRows.map(row =>
-                row.filter(course => course.id !== courseId)
-            );
-
-            this.clearCourseForm();
+            this.showAllCourses();
         },
 
         clearCourseForm() {
@@ -301,6 +323,46 @@ export default {
 
 .add-button {
     background: #fff;
+}
+
+.page-selector {
+    margin-top: 32px;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.page-selector td {
+    font-size: 26px;
+    padding-left: 6px;
+    padding-right: 6px;
+
+    cursor: pointer;
+
+    transition: .5s;
+}
+
+.page-selector td:hover {
+    color: rgb(114, 222, 255);
+}
+
+.container {
+    min-height: 83vh;
+    display: flex;
+    justify-content: center;
+
+    flex: 1;
+}
+
+footer {
+    height: 200px;
+    background-color: #0b1421;
+}
+
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 

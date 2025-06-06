@@ -12,6 +12,6 @@ public class Values
     public const int MEDIUM_TEXT = 150;
     public const int BIG_TEXT = 500;
     public const int HUGE_TEXT = 5000;
-    
 
+    public const int COURSES_ON_PAGE_AMOUNT = 8;
 }

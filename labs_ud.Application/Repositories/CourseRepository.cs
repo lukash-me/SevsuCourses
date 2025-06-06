@@ -41,7 +41,9 @@ public class CourseRepository
     public async Task<Result<Course[], Error>> GetAll(
         CancellationToken cancellationToken = default)
     {
-        var courses = await _dbContext.Course.ToArrayAsync(cancellationToken);
+        var courses = await _dbContext.Course.
+            OrderByDescending(t => t.DateCreated).
+            ToArrayAsync(cancellationToken);
         
         return courses;
     }
@@ -52,6 +54,7 @@ public class CourseRepository
     {
         var result = await _dbContext.Course
             .Where(t => t.TeacherId == teacherId)
+            .OrderByDescending(t => t.DateCreated)
             .ToListAsync(cancellationToken);
         
         return result;

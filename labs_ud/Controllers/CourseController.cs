@@ -28,6 +28,20 @@ public class CourseController : ControllerBase
         return Ok(result.Value);
     }
     
+    [HttpGet("page/{number:int}")]
+    public async Task<ActionResult<Guid>> GetPage(
+        [FromRoute] int number,
+        [FromServices] GetPageService service,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await service.Handle(number, cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToResponse();
+        
+        return Ok(result.Value);
+    }
+    
     [HttpGet]
     public async Task<ActionResult<Guid>> GetAll(
         [FromServices] GetAllCoursesService service,

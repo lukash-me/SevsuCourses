@@ -6,3 +6,8 @@ public record CourseResponse(
     string description,
     string photo
 );
+
+public record CoursesPageResponse(
+    List<CourseResponse> Courses,
+    int PagesAmount
+);

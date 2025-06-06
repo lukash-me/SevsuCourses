@@ -12,7 +12,8 @@ public class Course
         Guid teacherId,
         string title,
         string? description,
-        string? photo
+        string? photo,
+        DateTime dateCreated
         )
     {
         Id = CourseID.NewCourseId();
@@ -20,12 +21,14 @@ public class Course
         Title = title;
         Description = description;
         Photo = photo;
+        DateCreated = dateCreated;
     }
     public Guid Id { get; set ; }
     public Guid TeacherId { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
     public string? Photo { get; set; }
+    public DateTime DateCreated { get; set; }
 
     public Result<string, Error> UpdateMainInfo(string title, string description, string? photo)
     {
@@ -51,7 +54,8 @@ public class Course
         string teacherId,
         string title,
         string description,
-        string? photo
+        string? photo,
+        DateTime dateCreated
         )
     {
         var checkGuidResult = Ids.CheckGuid(teacherId, "student id");
@@ -75,7 +79,8 @@ public class Course
             Guid.Parse(teacherId),
             title,
             description,
-            photo
+            photo,
+            dateCreated
             );
         
         return course;

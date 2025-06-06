@@ -317,7 +317,18 @@
   }
 
   body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(to right, #141e30, #243b55);
+
+    overflow-x: hidden;
+  }
+
+  html {
+    height: 100%;
+    margin: 0;
   }
 
   nav ul li ul {
@@ -535,7 +546,5 @@
 .card h2 {
   font-size: 16px;
 }
-
-
 
 </style>

@@ -40,6 +40,18 @@ export async function getAllCourses() {
     }
 }
 
+export async function getCoursesOnPage(pageNumber) {
+    try {
+        const response = await fetch(`http://localhost:5036/Course/page/${pageNumber}`);
+        const result = await response.json();
+
+        return result;
+    } 
+    catch (error) {
+        console.error("Problem with server:", error);
+    }
+}
+
 export async function getCourseInfo(courseId) {
     try {
         const response = await fetch(`http://localhost:5036/Course/${courseId}`);
